@@ -1,4 +1,4 @@
-package org.fireflyest.relatelock;
+package io.fireflyest.relatelock;
 
 import org.bukkit.plugin.java.JavaPlugin;
 

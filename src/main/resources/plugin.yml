@@ -1,4 +1,4 @@
 name: RelateLock
 version: '${project.version}'
-main: org.fireflyest.relatelock.RelateLock
+main: io.fireflyest.relatelock.RelateLock
 api-version: '1.18'
