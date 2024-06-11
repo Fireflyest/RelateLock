@@ -2,6 +2,8 @@ package io.fireflyest.relatelock;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
+import io.fireflyest.relatelock.listener.LockEventListener;
+
 public final class RelateLock extends JavaPlugin {
     
     public static RelateLock getPlugin() {
@@ -10,14 +12,7 @@ public final class RelateLock extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        // data service
-        
-        // gui service
-        
-        // listener
-        
-        // commands
-        
+        this.getServer().getPluginManager().registerEvents(new LockEventListener(), this);
     }
 
     @Override
