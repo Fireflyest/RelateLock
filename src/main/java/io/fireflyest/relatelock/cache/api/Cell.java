@@ -23,7 +23,7 @@ public interface Cell<T> {
      * @return 集合
      */
     @Nullable
-    Set<T> getSet();
+    Set<T> getAll();
     
     /**
      * 数据剩余保留时间，如果没有限制，返回-1；如果到期，返回0

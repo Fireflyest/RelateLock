@@ -2,10 +2,8 @@ package io.fireflyest.relatelock.cache;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -32,7 +30,7 @@ public class CacheCell implements Cell<String> {
      */
     public CacheCell(long expire, String... values) {
         this.isSet = values.length > 1;
-        this.value = values[0];
+        this.value = isSet ? null : values[0];
         this.valueSet = new HashSet<>();
         this.born = Instant.now();
         this.deadline = expire == -1 ? null : Instant.now().plusMillis(expire);
@@ -44,8 +42,7 @@ public class CacheCell implements Cell<String> {
     @Nullable
     public String get() {
         // 无限期或者在期限内返回数据
-        boolean valid = deadline == null || Instant.now().isBefore(deadline);
-        if (valid) {
+        if (deadline == null || Instant.now().isBefore(deadline)) {
             return isSet ? valueSet.toString() : value;
         }
         return null;
@@ -53,7 +50,7 @@ public class CacheCell implements Cell<String> {
 
     @Override
     @Nullable
-    public Set<String> getSet() {
+    public Set<String> getAll() {
         return deadline == null || Instant.now().isBefore(deadline) ? valueSet : null;
     }
 
@@ -71,7 +68,7 @@ public class CacheCell implements Cell<String> {
 
     @Override
     public long age() {
-        return Duration.between(born, Instant.now()).toSeconds();
+        return Duration.between(born, Instant.now()).toMillis();
     }
 
     @Override
