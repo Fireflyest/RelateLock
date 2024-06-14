@@ -1,4 +1,4 @@
-package io.fireflyest.relatelock.cache;
+package io.fireflyest.relatelock.cache.api;
 
 /**
  * 存储字典
