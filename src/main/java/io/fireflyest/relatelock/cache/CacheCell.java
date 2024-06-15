@@ -7,8 +7,6 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
-import io.fireflyest.relatelock.cache.api.Cell;
-
 /**
  * 缓存数据存储实现类
  * @author Fireflyest
@@ -53,7 +51,12 @@ public class CacheCell implements Cell<String> {
     @Override
     @Nullable
     public Set<String> getAll() {
-        return deadline == null || Instant.now().isBefore(deadline) ? valueSet : null;
+        if (deadline == null || Instant.now().isBefore(deadline)) {
+            return valueSet;
+        }
+        // 数据失效，清空集合并返回空
+        valueSet.clear();
+        return null;
     }
 
     @Override

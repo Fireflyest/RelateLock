@@ -1,4 +1,4 @@
-package io.fireflyest.relatelock.cache.api;
+package io.fireflyest.relatelock.cache;
 
 import java.util.Set;
 
