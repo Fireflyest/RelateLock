@@ -54,9 +54,9 @@ public interface Organism<T> {
     /**
      * 设置无期限数据集合
      * @param key 键
-     * @param values 值
+     * @param valueSet 值集
      */
-    void set(@Nonnull String key, Set<T> values);
+    void set(@Nonnull String key, Set<T> valueSet);
 
     /**
      * 设置限期数据
@@ -65,6 +65,14 @@ public interface Organism<T> {
      * @param value 值
      */
     void setex(@Nonnull String key, int ms, T value);
+
+    /**
+     * 设置限期数据
+     * @param key 键
+     * @param ms 失效时间，单位毫秒
+     * @param valueSet 值集
+     */
+    void setex(@Nonnull String key, int ms, Set<T> valueSet);
 
     /**
      * 获取数据

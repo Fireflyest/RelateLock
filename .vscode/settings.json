@@ -1,4 +1,6 @@
 {
     "java.compile.nullAnalysis.mode": "automatic",
-    "java.configuration.updateBuildConfiguration": "automatic"
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.checkstyle.configuration": "/E:/Project/checkstyle.xml",
+    "java.checkstyle.version": "10.16.0"
 }
