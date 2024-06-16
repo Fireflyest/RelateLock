@@ -1,7 +1,6 @@
-package io.fireflyest.relatelock.cache;
+package io.fireflyest.relatelock.cache.api;
 
 import java.util.Set;
-
 import javax.annotation.Nullable;
 
 /**
@@ -44,7 +43,7 @@ public interface Cell<T> {
     public long age();
 
     /**
-     * 设置为无限期数据
+     * 设置为无限期数据。
      */
     public void persist();
 

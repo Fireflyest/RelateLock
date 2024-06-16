@@ -1,8 +1,8 @@
-package io.fireflyest.relatelock.cache;
+package io.fireflyest.relatelock.cache.api;
 
 import java.util.Set;
-
 import javax.annotation.Nonnull;
+import org.bukkit.plugin.Plugin;
 
 /**
  * 存储字典
@@ -122,5 +122,23 @@ public interface Organism<T> {
      * @return 数量
      */
     int scard(@Nonnull String key);
+
+    /**
+     * 获取键的集合
+     * @return 键的集合
+     */
+    Set<String> keySet();
+
+    /**
+     * 保存缓存到插件的目录下
+     * @param plugin 插件
+     */
+    void save(@Nonnull Plugin plugin);
+
+    /**
+     * 从插件的目录里加载缓存
+     * @param plugin 插件
+     */
+    void load(@Nonnull Plugin plugin);
 
 }
