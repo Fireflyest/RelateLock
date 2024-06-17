@@ -73,7 +73,18 @@ public class CacheCell implements Cell<String> {
     }
 
     @Override
+    public void append(String value) {
+        // 如果是单值则替换，集合则添加
+        if (valueSet.size() == 1) {
+            value = this.get() + value;
+            valueSet.clear();
+        }
+        valueSet.add(value);
+    }
+
+    @Override
     public long ttl() {
+        // 期限到了返回0
         if (deadline == null) {
             return -1;
         }

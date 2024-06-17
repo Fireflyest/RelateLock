@@ -173,8 +173,8 @@ public class CacheOrganism implements StringOrganism {
      */
     @Override
     public void save(@Nonnull Plugin plugin) {
-        String fileName = String.format("%s.cache", name);
-        File cacheFile = new File(plugin.getDataFolder(), fileName);
+        final String fileName = String.format("%s.cache", name);
+        final File cacheFile = new File(plugin.getDataFolder(), fileName);
         try (FileOutputStream fStream = new FileOutputStream(cacheFile);
                 DataOutputStream dStream = new DataOutputStream(fStream)) {
             
@@ -208,10 +208,11 @@ public class CacheOrganism implements StringOrganism {
 
     @Override
     public void load(@Nonnull Plugin plugin) {
-        String fileName = String.format("%s.cache", name);
-        File cacheFile = new File(plugin.getDataFolder(), fileName);
+        final String fileName = String.format("%s.cache", name);
+        final File cacheFile = new File(plugin.getDataFolder(), fileName);
         try (FileInputStream fStream = new FileInputStream(cacheFile);
                 DataInputStream dStream = new DataInputStream(fStream)) {
+            
             while (dStream.available() > 0) {
                 String key = dStream.readUTF();
                 Instant born = Instant.ofEpochMilli(dStream.readLong());
@@ -228,6 +229,17 @@ public class CacheOrganism implements StringOrganism {
         } catch (Exception e) {
             e.printStackTrace();
         }    
+    }
+
+    @Override
+    public void append(@Nonnull String key, String substring) {
+        final CacheCell cell = cacheMap.get(key);
+        // 存在则拼接，否则添加新数据
+        if (cell != null && cell.get() != null) {
+            cell.append(substring);
+        } else {
+            this.set(key, substring);
+        }
     }
 
 }
