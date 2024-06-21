@@ -24,6 +24,7 @@ import java.util.List;
 
 public class LockEventListener implements Listener {
 
+
     @EventHandler
     public void onSignChange(SignChangeEvent event){
         // if(event.isCancelled())return;

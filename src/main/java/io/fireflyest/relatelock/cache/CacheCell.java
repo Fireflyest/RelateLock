@@ -88,7 +88,7 @@ public class CacheCell implements Cell<String> {
         if (deadline == null) {
             return -1;
         }
-        long ms = Duration.between(Instant.now(), deadline).toMillis();
+        final long ms = Duration.between(Instant.now(), deadline).toMillis();
         return Math.max(ms, 0);
     }
 

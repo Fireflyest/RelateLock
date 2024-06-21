@@ -134,12 +134,12 @@ public class CacheOrganism implements StringOrganism {
         Set<String> valueSet = null;
         String value = null;
         if (cell != null && (valueSet = cell.getAll()) != null) {
-            int size;
+            final int size;
             if ((size = valueSet.size()) == 0) {
                 return value;
             }
             int randomInt = random.nextInt(size);
-            Iterator<String> iterator = valueSet.iterator();
+            final Iterator<String> iterator = valueSet.iterator();
             while (iterator.hasNext()) {
                 value = iterator.next();
                 if (randomInt-- == 0) {
@@ -214,17 +214,16 @@ public class CacheOrganism implements StringOrganism {
                 DataInputStream dStream = new DataInputStream(fStream)) {
             
             while (dStream.available() > 0) {
-                String key = dStream.readUTF();
-                Instant born = Instant.ofEpochMilli(dStream.readLong());
-                long dl = dStream.readLong();
-                Instant deadline = dl == 0 ? null : Instant.ofEpochMilli(dl);
-                int count = dStream.readInt();
-                Set<String> valueSet = new HashSet<>();
+                final String key = dStream.readUTF();
+                final Instant born = Instant.ofEpochMilli(dStream.readLong());
+                final long dl = dStream.readLong();
+                final Instant deadline = dl == 0 ? null : Instant.ofEpochMilli(dl);
+                final int count = dStream.readInt();
+                final Set<String> valueSet = new HashSet<>();
                 for (int i = 0; i < count; i++) {
                     valueSet.add(dStream.readUTF());
                 }
-                CacheCell cacheCell = new CacheCell(born, deadline, valueSet);
-                cacheMap.put(key, cacheCell);
+                cacheMap.put(key, new CacheCell(born, deadline, valueSet));
             }
         } catch (Exception e) {
             e.printStackTrace();
