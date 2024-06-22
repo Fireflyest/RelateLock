@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import org.bukkit.Chunk;
+import org.bukkit.Location;
 import org.bukkit.block.Bed;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -26,76 +27,39 @@ import io.fireflyest.relatelock.bean.Lock;
  */
 public final class LocksmithImpl {
     
-    private final Map<Chunk, Set<Block>> lockedMap = new HashMap<>();
+    private final Map<Chunk, Set<Location>> lockedMap = new HashMap<>();
 
     public LocksmithImpl() {
         
     }
 
-    boolean lock(@Nonnull final Block block, @Nonnull final Lock lock) {
-        // 牌子的方向
-        final Directional directional = ((Directional) block.getBlockData());
-
-        final Block attachBlock = block.getRelative(directional.getFacing().getOppositeFace());
-        Relate relate;
-
-        // chest tile block
-
-        // chest s b
-        // tile container door bed other
-        // block -
-
-        if (attachBlock.getState() instanceof Chest chest) { // 箱子
-            
+    boolean lock(@Nonnull final Block signBlock, @Nonnull final Lock lock) {
+        // 获取被贴方块
+        final Directional directional = ((Directional) signBlock.getBlockData());
+        final Block attachBlock = signBlock.getRelative(directional.getFacing().getOppositeFace());
+        // 获取关联
+        final Relate relate;
+        if (attachBlock.getState() instanceof Chest) { // 箱子
+            relate = new ChestRelate(signBlock, attachBlock);
         } else if (attachBlock.getState() instanceof TileState) { // 除了箱子外的可操作方块
-
+            relate = new TileRelate(signBlock, attachBlock);
         } else { // 上锁贴着方块附近的方块
-            
+            relate = new BlockRelate(signBlock, attachBlock);
         }
-        return false;
+        // 判断是否可锁
+        for (Block relateBlock : relate.getRelateBlocks()) {
+            if (this.isLocked(relateBlock.getLocation())) {
+                return false;
+            }
+        }
+        // 上锁
+        
+        return true;
     }
 
-    boolean isLocked(@Nonnull final Block block) {
-        final Set<Block> lockedSet = lockedMap.get(block.getChunk());
-        return lockedSet != null && lockedSet.contains(block);
-    }
-
-    
-    private Set<Block> tileRelate(@Nonnull Block block) {
-        final Set<Block> blocks = new HashSet<>();
-        var canLock = true;
-        blocks.add(block);
-
-        return canLock ? blocks : null;
-    }
-
-    private Set<Block> doorRelate(@Nonnull Block block) {
-        final Set<Block> blocks = new HashSet<>();
-        var canLock = true;
-        blocks.add(block);
-
-        return canLock ? blocks : null;
-    }
-
-    private Set<Block> containerRelate(@Nonnull Block block) {
-        final Set<Block> blocks = new HashSet<>();
-        var canLock = true;
-        blocks.add(block);
-
-        return canLock ? blocks : null;
-    }
-
-    private Set<Block> chestRelate(@Nonnull Block block) {
-        // if (container.getInventory() instanceof DoubleChestInventory doubleChestInventory) {
-                
-        // } else {
-
-        // }
-        final Set<Block> blocks = new HashSet<>();
-        var canLock = true;
-        blocks.add(block);
-
-        return canLock ? blocks : null;
+    boolean isLocked(@Nonnull final Location location) {
+        final Set<Location> lockedSet = lockedMap.get(location.getChunk());
+        return lockedSet != null && lockedSet.contains(location);
     }
 
 }
