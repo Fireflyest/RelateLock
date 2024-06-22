@@ -25,6 +25,10 @@ public class BlockRelate extends Relate {
         if (attachBlock.isEmpty() || attachBlock.isLiquid() || attachBlock.isPassable()) {
             return;
         }
+
+        // 被贴方块
+        relateBlocks.add(attachBlock);
+
         // 获取下方的方块
         final Block down = attachBlock.getRelative(BlockFace.DOWN);
         if (down.getState() instanceof TileState) {
@@ -35,6 +39,7 @@ public class BlockRelate extends Relate {
         if (up.getState() instanceof TileState) {
             subRelate.add(new TileRelate(null, up));
         }
+
         // 两侧
         if (signBlock != null && signBlock.getState() instanceof Directional directional) {
             // 获取左侧的方块
