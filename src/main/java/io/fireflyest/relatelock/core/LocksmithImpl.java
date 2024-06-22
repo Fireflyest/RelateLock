@@ -46,14 +46,20 @@ public final class LocksmithImpl {
         } else { // 上锁贴着方块附近的方块
             relate = new BlockRelate(signBlock, attachBlock);
         }
-        // 判断是否可锁
+        // 判断是否全可锁
         for (Block relateBlock : relate.getRelateBlocks()) {
             if (this.isLocked(relateBlock.getLocation())) {
                 return false;
             }
         }
         // 上锁
-        
+        // block -> sign
+        // sign -> owner uuid manager[uuid] share[uuid] outset type password log[uuid-time] 
+
+        // 缓存思想 uuid - loc
+        for (Block relateBlock : relate.getRelateBlocks()) {
+            // String locKey = 
+        }
         return true;
     }
 
