@@ -19,7 +19,7 @@ public class ChestRelate extends Relate {
     }
 
     @Override
-    public Relate traceRelateBlocks() {
+    public void traceRelateBlocks() {
         if (attachBlock.getState() instanceof Container container) {
             if (container.getInventory() instanceof DoubleChestInventory doubleChestInventory) {
                 // 大箱子的两边
@@ -36,8 +36,6 @@ public class ChestRelate extends Relate {
                 subRelate.add(new ContainerRelate(null, attachBlock));
             }
         }
-        
-        return this;
     }
     
 }

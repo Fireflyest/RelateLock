@@ -33,9 +33,8 @@ public abstract class Relate {
     /**
      * 追溯所有的关联，并把关联方块添加到relateBlocks中，
      * 将子关联添加到subRelate中
-     * @return 关联
      */
-    public abstract Relate traceRelateBlocks();
+    public abstract void traceRelateBlocks();
 
     /**
      * 获取相关联的方块，包括牌子本身及其所有子关联

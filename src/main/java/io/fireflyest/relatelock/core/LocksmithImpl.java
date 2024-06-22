@@ -38,17 +38,19 @@ public final class LocksmithImpl {
 
         final Block attachBlock = block.getRelative(directional.getFacing().getOppositeFace());
         Relate relate;
+
+        // chest tile block
+
+        // chest s b
+        // tile container door bed other
+        // block -
+
         if (attachBlock.getState() instanceof Chest chest) { // 箱子
-            // relate = new ChestRelate();
-        } else if (block.getBlockData() instanceof Container) { // 箱子外的容器
-
-        } else if (block.getBlockData() instanceof Door) { // 门
-
+            
         } else if (attachBlock.getState() instanceof TileState) { // 除了箱子外的可操作方块
 
-        } else { // 非可操作类型方块或者空气，查询附近可上锁方块
-            // TODO: 判断贴的方块是否实体方块
-            assert block.isEmpty();
+        } else { // 上锁贴着方块附近的方块
+            
         }
         return false;
     }
