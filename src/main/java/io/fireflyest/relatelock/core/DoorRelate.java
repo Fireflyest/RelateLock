@@ -5,7 +5,8 @@ import javax.annotation.Nullable;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.type.Door;
-import io.fireflyest.relatelock.BlockUtils;
+
+import io.fireflyest.relatelock.util.BlockUtils;
 
 /**
  * 门锁

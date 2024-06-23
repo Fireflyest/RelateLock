@@ -6,7 +6,8 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.TileState;
 import org.bukkit.block.data.Directional;
-import io.fireflyest.relatelock.BlockUtils;
+
+import io.fireflyest.relatelock.util.BlockUtils;
 
 /**
  * 非直接贴附锁

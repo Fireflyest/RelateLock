@@ -9,54 +9,54 @@ import org.bukkit.plugin.Plugin;
  * @author Fireflyest
  * @since 1.0
  */
-public interface Organism<T> {
+public interface Organism<K, V> {
 
     /**
      * 删除数据
      * @param key 键
      */
-    void del(@Nonnull String key);
+    void del(@Nonnull K key);
 
     /**
      * 设置数据期限
      * @param key 键
      * @param ms 失效时间，单位毫秒
      */
-    void expire(@Nonnull String key, int ms);
+    void expire(@Nonnull K key, int ms);
 
     /**
      * 判断某个键是否存在
      * @param key 键
      * @return 是否存在
      */
-    boolean exist(@Nonnull String key);
+    boolean exist(@Nonnull K key);
 
     /**
      * 设置显示数据为永久
      * @param key 键
      */
-    void persist(@Nonnull String key);
+    void persist(@Nonnull K key);
 
     /**
      * 数据剩余保留时间
      * @param key 键
      * @return 剩余时间，单位毫秒
      */
-    long ttl(@Nonnull String key);
+    long ttl(@Nonnull K key);
 
     /**
      * 设置无期限数据
      * @param key 键
      * @param value 值
      */
-    void set(@Nonnull String key, T value);
+    void set(@Nonnull K key, V value);
 
     /**
      * 设置无期限数据集合
      * @param key 键
      * @param valueSet 值集
      */
-    void set(@Nonnull String key, Set<T> valueSet);
+    void set(@Nonnull K key, Set<V> valueSet);
 
     /**
      * 设置限期数据
@@ -64,7 +64,7 @@ public interface Organism<T> {
      * @param ms 失效时间，单位毫秒
      * @param value 值
      */
-    void setex(@Nonnull String key, int ms, T value);
+    void setex(@Nonnull K key, int ms, V value);
 
     /**
      * 设置限期数据
@@ -72,62 +72,62 @@ public interface Organism<T> {
      * @param ms 失效时间，单位毫秒
      * @param valueSet 值集
      */
-    void setex(@Nonnull String key, int ms, Set<T> valueSet);
+    void setex(@Nonnull K key, int ms, Set<V> valueSet);
 
     /**
      * 获取数据
      * @param key 键
      * @return 值
      */
-    T get(@Nonnull String key);
+    V get(@Nonnull K key);
 
     /**
      * 获取数据存在时间
      * @param key 键
      * @return 存在时间，单位毫秒
      */
-    long age(@Nonnull String key);
+    long age(@Nonnull K key);
 
     /**
      * 添加一个数据到集
      * @param key 键
      * @param value 值
      */
-    void sadd(@Nonnull String key, T value);
+    void sadd(@Nonnull K key, V value);
 
     /**
      * 获取某集所有数据
      * @param key 键
      * @return 数据集
      */
-    Set<T> smembers(@Nonnull String key);
+    Set<V> smembers(@Nonnull K key);
 
     /**
      * 删除集里的元素
      * @param key 键
      * @param value 值
      */
-    void srem(@Nonnull String key, T value);
+    void srem(@Nonnull K key, V value);
 
     /**
      * 随机出栈一个值
      * @param key 键
      * @return 值
      */
-    T spop(@Nonnull String key);
+    V spop(@Nonnull K key);
 
     /**
      * 获取集合里面的元素数量
      * @param key 键
      * @return 数量
      */
-    int scard(@Nonnull String key);
+    int scard(@Nonnull K key);
 
     /**
      * 获取键的集合
      * @return 键的集合
      */
-    Set<String> keySet();
+    Set<K> keySet();
 
     /**
      * 保存缓存到插件的目录下

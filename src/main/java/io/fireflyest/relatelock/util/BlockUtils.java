@@ -1,4 +1,4 @@
-package io.fireflyest.relatelock;
+package io.fireflyest.relatelock.util;
 
 import org.bukkit.block.BlockFace;
 
