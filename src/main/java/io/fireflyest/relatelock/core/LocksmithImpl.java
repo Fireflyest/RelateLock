@@ -17,14 +17,15 @@ import com.google.common.base.Objects;
 import io.fireflyest.relatelock.bean.Lock;
 import io.fireflyest.relatelock.cache.LocationOrganism;
 import io.fireflyest.relatelock.cache.LockOrganism;
+import io.fireflyest.relatelock.core.api.Locksmith;
 
 /**
  * 锁匠实现类
  * @author Fireflyest
  * @since 1.0
  */
-public final class LocksmithImpl {
-    
+public class LocksmithImpl implements Locksmith {
+
     /**
      * 所有上锁的位置
      */
@@ -40,11 +41,9 @@ public final class LocksmithImpl {
      */
     private final LockOrganism lockOrg = new LockOrganism("lock");
 
-    public LocksmithImpl() {
-        //
-    }
 
-    boolean lock(@Nonnull Block signBlock, @Nonnull Lock lock) {
+    @Override
+    public boolean lock(@Nonnull Block signBlock, @Nonnull Lock lock) {
         // 获取被贴方块
         final Directional directional = ((Directional) signBlock.getBlockData());
         final Block attachBlock = signBlock.getRelative(directional.getFacing().getOppositeFace());
@@ -78,32 +77,8 @@ public final class LocksmithImpl {
         return true;
     }
 
-    boolean isLocationLocked(@Nonnull Location location) {
-        final Set<Location> lockedSet = locationMap.get(location.getChunk());
-        return lockedSet != null && lockedSet.contains(location);
-    }
-
-    void lockLocation(@Nonnull Location location, @Nonnull Location signLocation) {
-        // 锁
-        final Chunk chunk = location.getChunk();
-        final Set<Location> lockedSet = locationMap.computeIfAbsent(chunk, k -> new HashSet<>());
-        lockedSet.add(location);
-        // 关联
-        locationOrg.set(location, signLocation);
-        locationOrg.sadd(signLocation, location);
-    }
-
-    void unlockLocation(@Nonnull Location location, @Nonnull Location signLocation) {
-        // 解锁
-        final Chunk chunk = location.getChunk();
-        final Set<Location> lockedSet = locationMap.computeIfAbsent(chunk, k -> new HashSet<>());
-        lockedSet.remove(location);
-        // 解关联
-        locationOrg.del(location);
-        locationOrg.srem(signLocation, location);
-    }
-
-    void unlock(@Nonnull Location signLocation) {
+    @Override
+    public void unlock(@Nonnull Location signLocation) {
         // 解除所有关联方块位置锁
         final Set<Location> smembers = locationOrg.smembers(signLocation);
         if (smembers != null) {
@@ -118,7 +93,8 @@ public final class LocksmithImpl {
         this.unlockLocation(signLocation, signLocation);
     }
 
-    boolean use(@Nonnull Location location, @Nonnull String uid, @Nonnull String name) {
+    @Override
+    public boolean use(@Nonnull Location location, @Nonnull String uid, @Nonnull String name) {
         boolean access = true;
         if (this.isLocationLocked(location) && locationOrg.scard(location) == 1) {
             // 获取锁
@@ -134,7 +110,8 @@ public final class LocksmithImpl {
         return access;
     }
 
-    boolean destroy(@Nonnull Location location, @Nonnull String uid, @Nonnull String name) {
+    @Override
+    public boolean destroy(@Nonnull Location location, @Nonnull String uid, @Nonnull String name) {
         boolean access = true;
         if (this.isLocationLocked(location)) {
             if (locationOrg.scard(location) == 1) { // 关联方块
@@ -161,6 +138,46 @@ public final class LocksmithImpl {
             }
         }
         return access;
+    }
+    
+    /**
+     * 方块是否上锁
+     * @param location 位置
+     * @return 是否上锁
+     */
+    private boolean isLocationLocked(@Nonnull Location location) {
+        final Set<Location> lockedSet = locationMap.get(location.getChunk());
+        return lockedSet != null && lockedSet.contains(location);
+    }
+
+    /**
+     * 上锁方块
+     * @param location 方块位置
+     * @param signLocation 牌子位置
+     */
+    private void lockLocation(@Nonnull Location location, @Nonnull Location signLocation) {
+        // 锁
+        final Chunk chunk = location.getChunk();
+        final Set<Location> lockedSet = locationMap.computeIfAbsent(chunk, k -> new HashSet<>());
+        lockedSet.add(location);
+        // 关联
+        locationOrg.set(location, signLocation);
+        locationOrg.sadd(signLocation, location);
+    }
+
+    /**
+     * 解锁方块
+     * @param location 方块位置
+     * @param signLocation 牌子位置
+     */
+    private void unlockLocation(@Nonnull Location location, @Nonnull Location signLocation) {
+        // 解锁
+        final Chunk chunk = location.getChunk();
+        final Set<Location> lockedSet = locationMap.computeIfAbsent(chunk, k -> new HashSet<>());
+        lockedSet.remove(location);
+        // 解关联
+        locationOrg.del(location);
+        locationOrg.srem(signLocation, location);
     }
 
 }

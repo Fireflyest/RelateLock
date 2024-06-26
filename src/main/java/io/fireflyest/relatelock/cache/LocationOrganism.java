@@ -17,7 +17,7 @@ import javax.annotation.Nonnull;
 import org.bukkit.Location;
 import org.bukkit.plugin.Plugin;
 import io.fireflyest.relatelock.cache.api.Organism;
-import io.fireflyest.relatelock.util.SerializationUtils;
+import io.fireflyest.relatelock.util.YamlUtils;
 
 /**
  * 数据缓存组织实现类
@@ -194,13 +194,13 @@ public class LocationOrganism implements Organism<Location, Location> {
                     continue;
                 }
                 // 数据信息拼接
-                dStream.writeUTF(SerializationUtils.serialize(entry.getKey())); // key
+                dStream.writeUTF(YamlUtils.serialize(entry.getKey())); // key
                 dStream.writeLong(cacheCell.getBorn().toEpochMilli()); // 起始时间
                 dStream.writeLong(deadline == null ? 0 : deadline.toEpochMilli()); // 失效时间
                 dStream.writeInt(valueSet.size()); // 数据数量
                 // 数据集拼接
                 for (Location value : valueSet) {
-                    dStream.writeUTF(SerializationUtils.serialize(value)); // 数据
+                    dStream.writeUTF(YamlUtils.serialize(value)); // 数据
                 }
             }
             dStream.flush();
@@ -224,9 +224,9 @@ public class LocationOrganism implements Organism<Location, Location> {
                 final int count = dStream.readInt();
                 final Set<Location> valueSet = new HashSet<>();
                 for (int i = 0; i < count; i++) {
-                    valueSet.add(SerializationUtils.deserialize(dStream.readUTF(), Location.class));
+                    valueSet.add(YamlUtils.deserialize(dStream.readUTF(), Location.class));
                 }
-                final Location key = SerializationUtils.deserialize(locationKey, Location.class);
+                final Location key = YamlUtils.deserialize(locationKey, Location.class);
                 cacheMap.put(key, new LocationCell(born, deadline, valueSet));
             }
         } catch (Exception e) {

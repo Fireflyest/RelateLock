@@ -18,8 +18,8 @@ import org.bukkit.Location;
 import org.bukkit.plugin.Plugin;
 import io.fireflyest.relatelock.bean.Lock;
 import io.fireflyest.relatelock.cache.api.Organism;
-import io.fireflyest.relatelock.util.SerializationUtils;
 import io.fireflyest.relatelock.util.StringUtils;
+import io.fireflyest.relatelock.util.YamlUtils;
 
 /**
  * 数据缓存组织实现类
@@ -195,7 +195,7 @@ public class LockOrganism implements Organism<Location, Lock> {
                     continue;
                 }
                 // 数据信息拼接
-                dStream.writeUTF(SerializationUtils.serialize(entry.getKey())); // key
+                dStream.writeUTF(YamlUtils.serialize(entry.getKey())); // key
                 dStream.writeLong(cacheCell.getBorn().toEpochMilli()); // 起始时间
                 dStream.writeLong(deadline == null ? 0 : deadline.toEpochMilli()); // 失效时间
                 dStream.writeInt(valueSet.size()); // 数据数量
@@ -227,7 +227,7 @@ public class LockOrganism implements Organism<Location, Lock> {
                 for (int i = 0; i < count; i++) {
                     valueSet.add(StringUtils.jsonToObj(dStream.readUTF(), Lock.class));
                 }
-                final Location key = SerializationUtils.deserialize(locationKey, Location.class);
+                final Location key = YamlUtils.deserialize(locationKey, Location.class);
                 cacheMap.put(key, new LockCell(born, deadline, valueSet));
             }
         } catch (Exception e) {

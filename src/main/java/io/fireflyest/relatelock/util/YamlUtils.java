@@ -1,23 +1,28 @@
 package io.fireflyest.relatelock.util;
 
+import java.io.File;
+import javax.annotation.Nonnull;
 import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.java.JavaPlugin;
 
 /**
- * 物品析构与解析
+ * 配置文件工具类
  * @author Fireflyest
- * @since 1.1.6
+ * @since 1.0
  */
-public final class SerializationUtils {
-
+public final class YamlUtils {
+    
     public static final String DATA_PATH = "yaml";
 
     // 缓存解析
     private static final YamlConfiguration yaml = new YamlConfiguration();
 
-    private SerializationUtils() {
+    private YamlUtils() {
+        //
     }
 
     /**
@@ -62,6 +67,31 @@ public final class SerializationUtils {
      */
     public static ItemStack deserializeItemStack(String stackData) {
         return deserialize(stackData, ItemStack.class);
+    }
+
+    /**
+     * 更新配置的值
+     * @param plugin 插件
+     * @param key 键
+     * @param value 值
+     */
+    public void setConfigData(@Nonnull JavaPlugin plugin, @Nonnull String key, Object value) {
+        plugin.getConfig().set(key, value);
+        plugin.saveConfig();
+    }
+
+    /**
+     * 加载配置文件
+     * @param plugin 插件
+     * @param child 子路径
+     * @return 配置文件
+     */
+    public static FileConfiguration loadYaml(@Nonnull JavaPlugin plugin, @Nonnull String child) {
+        final File file = new File(plugin.getDataFolder(), child);
+        if (!file.exists()) {
+            plugin.saveResource(child, false);
+        }
+        return YamlConfiguration.loadConfiguration(file);
     }
 
 }
