@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nullable;
+import org.bukkit.Location;
 import io.fireflyest.relatelock.cache.api.Cell;
 
 /**
@@ -13,11 +14,11 @@ import io.fireflyest.relatelock.cache.api.Cell;
  * @author Fireflyest
  * @since 1.0
  */
-public class CacheCell implements Cell<String> {
+public class LocationCell implements Cell<Location> {
 
     private final Instant born;
     private Instant deadline;
-    private final Set<String> valueSet;
+    private final Set<Location> valueSet;
 
     /**
      * 用于读取数据的构造函数
@@ -26,7 +27,7 @@ public class CacheCell implements Cell<String> {
      * @param deadline 失效时间
      * @param valueSet 数据集
      */
-    public CacheCell(Instant born, Instant deadline, Set<String> valueSet) {
+    public LocationCell(Instant born, Instant deadline, Set<Location> valueSet) {
         this.born = born;
         this.deadline = deadline;
         this.valueSet = valueSet;
@@ -37,7 +38,7 @@ public class CacheCell implements Cell<String> {
      * @param expire 失效时间，单位毫秒，值小于等于0表示无限制
      * @param value 值
      */
-    public CacheCell(long expire, String value) {
+    public LocationCell(long expire, Location value) {
         this(expire, new HashSet<>(Set.of(value)));
     }
 
@@ -46,23 +47,23 @@ public class CacheCell implements Cell<String> {
      * @param expire 失效时间，单位毫秒，值小于等于0表示无限制
      * @param valueSet 值集
      */
-    public CacheCell(long expire, Set<String> valueSet) {
+    public LocationCell(long expire, Set<Location> valueSet) {
         this(Instant.now(), expire <= 0 ? null : Instant.now().plusMillis(expire), valueSet);
     }
 
     @Override
     @Nullable
-    public String get() {
+    public Location get() {
         // 无限期或者在期限内返回数据
         if (deadline == null || Instant.now().isBefore(deadline)) {
-            return valueSet.size() == 1 ? valueSet.toArray(new String[0])[0] : valueSet.toString();
+            return valueSet.toArray(new Location[0])[0];
         }
         return null;
     }
 
     @Override
     @Nullable
-    public Set<String> getAll() {
+    public Set<Location> getAll() {
         // 无限期或者在期限内返回数据
         if (deadline == null || Instant.now().isBefore(deadline)) {
             return valueSet;
@@ -70,16 +71,6 @@ public class CacheCell implements Cell<String> {
         // 数据失效，清空集合并返回空
         valueSet.clear();
         return null;
-    }
-
-    @Override
-    public void append(String value) {
-        // 如果是单值则替换，集合则添加
-        if (valueSet.size() == 1) {
-            value = this.get() + value;
-            valueSet.clear();
-        }
-        valueSet.add(value);
     }
 
     @Override

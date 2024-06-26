@@ -25,17 +25,17 @@ import io.fireflyest.relatelock.util.SerializationUtils;
  * @author Fireflyest
  * @since 1.0
  */
-public class CacheOrganism implements Organism<Location, String> {
+public class LocationOrganism implements Organism<Location, Location> {
 
     private final String name;
     private final Random random = new Random();
-    protected final Map<Location, CacheCell> cacheMap = new ConcurrentHashMap<>();
+    protected final Map<Location, LocationCell> cacheMap = new ConcurrentHashMap<>();
 
     /**
      * 数据组织构造函数
      * @param name 作为保存时的文件名称
      */
-    public CacheOrganism(String name) {
+    public LocationOrganism(String name) {
         this.name = name;
     }
 
@@ -46,7 +46,7 @@ public class CacheOrganism implements Organism<Location, String> {
 
     @Override
     public void expire(@Nonnull Location key, int ms) {
-        final CacheCell cell = cacheMap.get(key);
+        final LocationCell cell = cacheMap.get(key);
         if (cell != null && cell.get() != null) {
             cell.expire(ms);
         }
@@ -59,7 +59,7 @@ public class CacheOrganism implements Organism<Location, String> {
 
     @Override
     public void persist(@Nonnull Location key) {
-        final CacheCell cell = cacheMap.get(key);
+        final LocationCell cell = cacheMap.get(key);
         if (cell != null && cell.get() != null) {
             cell.persist();
         }
@@ -67,7 +67,7 @@ public class CacheOrganism implements Organism<Location, String> {
 
     @Override
     public long ttl(@Nonnull Location key) {
-        final CacheCell cell = cacheMap.get(key);
+        final LocationCell cell = cacheMap.get(key);
         long ms = 0;
         if (cell != null && cell.get() != null) {
             ms = cell.ttl();
@@ -76,27 +76,27 @@ public class CacheOrganism implements Organism<Location, String> {
     }
 
     @Override
-    public void set(@Nonnull Location key, String value) {
-        cacheMap.put(key, new CacheCell(-1, value));
+    public void set(@Nonnull Location key, Location value) {
+        cacheMap.put(key, new LocationCell(-1, value));
     }
 
     @Override
-    public void set(@Nonnull Location key, Set<String> valueSet) {
-        cacheMap.put(key, new CacheCell(-1, valueSet));
+    public void set(@Nonnull Location key, Set<Location> valueSet) {
+        cacheMap.put(key, new LocationCell(-1, valueSet));
     }
 
     @Override
-    public void setex(@Nonnull Location key, int ms, String value) {
-        cacheMap.put(key, new CacheCell(ms, value));
+    public void setex(@Nonnull Location key, int ms, Location value) {
+        cacheMap.put(key, new LocationCell(ms, value));
     }
 
     @Override
-    public void setex(@Nonnull Location key, int ms, Set<String> valueSet) {
-        cacheMap.put(key, new CacheCell(ms, valueSet));
+    public void setex(@Nonnull Location key, int ms, Set<Location> valueSet) {
+        cacheMap.put(key, new LocationCell(ms, valueSet));
     }
 
     @Override
-    public String get(@Nonnull Location key) {
+    public Location get(@Nonnull Location key) {
         return cacheMap.containsKey(key) ? cacheMap.get(key).get() : null;
     }
 
@@ -106,42 +106,42 @@ public class CacheOrganism implements Organism<Location, String> {
     }
 
     @Override
-    public void sadd(@Nonnull Location key, String value) {
-        final CacheCell cell = cacheMap.get(key);
-        Set<String> valueSet = null;
+    public void sadd(@Nonnull Location key, Location value) {
+        final LocationCell cell = cacheMap.get(key);
+        Set<Location> valueSet = null;
         if (cell != null && (valueSet = cell.getAll()) != null) {
             valueSet.add(value);
         } else {
-            cacheMap.put(key, new CacheCell(-1, value));
+            cacheMap.put(key, new LocationCell(-1, value));
         }
     }
 
     @Override
-    public Set<String> smembers(@Nonnull Location key) {
+    public Set<Location> smembers(@Nonnull Location key) {
         return cacheMap.containsKey(key) ? cacheMap.get(key).getAll() : null;
     }
 
     @Override
-    public void srem(@Nonnull Location key, String value) {
-        final CacheCell cell = cacheMap.get(key);
-        Set<String> valueSet = null;
+    public void srem(@Nonnull Location key, Location value) {
+        final LocationCell cell = cacheMap.get(key);
+        Set<Location> valueSet = null;
         if (cell != null && (valueSet = cell.getAll()) != null) {
             valueSet.remove(value);
         }
     }
 
     @Override
-    public String spop(@Nonnull Location key) {
-        final CacheCell cell = cacheMap.get(key);
-        Set<String> valueSet = null;
-        String value = null;
+    public Location spop(@Nonnull Location key) {
+        final LocationCell cell = cacheMap.get(key);
+        Set<Location> valueSet = null;
+        Location value = null;
         if (cell != null && (valueSet = cell.getAll()) != null) {
             final int size;
             if ((size = valueSet.size()) == 0) {
                 return value;
             }
             int randomInt = random.nextInt(size);
-            final Iterator<String> iterator = valueSet.iterator();
+            final Iterator<Location> iterator = valueSet.iterator();
             while (iterator.hasNext()) {
                 value = iterator.next();
                 if (randomInt-- == 0) {
@@ -155,8 +155,8 @@ public class CacheOrganism implements Organism<Location, String> {
 
     @Override
     public int scard(@Nonnull Location key) {
-        final CacheCell cell = cacheMap.get(key);
-        Set<String> valueSet = null;
+        final LocationCell cell = cacheMap.get(key);
+        Set<Location> valueSet = null;
         int size = 0;
         if (cell != null && (valueSet = cell.getAll()) != null) {
             size = valueSet.size();
@@ -180,12 +180,13 @@ public class CacheOrganism implements Organism<Location, String> {
         try (FileOutputStream fStream = new FileOutputStream(cacheFile);
                 DataOutputStream dStream = new DataOutputStream(fStream)) {
             
-            final Iterator<Entry<Location, CacheCell>> iterator = cacheMap.entrySet().iterator(); 
+            final Iterator<Entry<Location, LocationCell>> iterator 
+                = cacheMap.entrySet().iterator(); 
             // 拼接数据   
             while (iterator.hasNext()) {
-                final Entry<Location, CacheCell> entry = iterator.next();
-                final CacheCell cacheCell = entry.getValue();
-                final Set<String> valueSet = cacheCell.getAll();
+                final Entry<Location, LocationCell> entry = iterator.next();
+                final LocationCell cacheCell = entry.getValue();
+                final Set<Location> valueSet = cacheCell.getAll();
                 final Instant deadline = cacheCell.getDeadline();
                 // 已失效的不保存
                 if (valueSet == null) {
@@ -198,8 +199,8 @@ public class CacheOrganism implements Organism<Location, String> {
                 dStream.writeLong(deadline == null ? 0 : deadline.toEpochMilli()); // 失效时间
                 dStream.writeInt(valueSet.size()); // 数据数量
                 // 数据集拼接
-                for (String value : valueSet) {
-                    dStream.writeUTF(value); // 数据
+                for (Location value : valueSet) {
+                    dStream.writeUTF(SerializationUtils.serialize(value)); // 数据
                 }
             }
             dStream.flush();
@@ -221,12 +222,12 @@ public class CacheOrganism implements Organism<Location, String> {
                 final long dl = dStream.readLong();
                 final Instant deadline = dl == 0 ? null : Instant.ofEpochMilli(dl);
                 final int count = dStream.readInt();
-                final Set<String> valueSet = new HashSet<>();
+                final Set<Location> valueSet = new HashSet<>();
                 for (int i = 0; i < count; i++) {
-                    valueSet.add(dStream.readUTF());
+                    valueSet.add(SerializationUtils.deserialize(dStream.readUTF(), Location.class));
                 }
                 final Location key = SerializationUtils.deserialize(locationKey, Location.class);
-                cacheMap.put(key, new CacheCell(born, deadline, valueSet));
+                cacheMap.put(key, new LocationCell(born, deadline, valueSet));
             }
         } catch (Exception e) {
             e.printStackTrace();

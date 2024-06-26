@@ -42,9 +42,6 @@ public abstract class Relate {
      */
     public Set<Block> getRelateBlocks() {
         if (!trace) {
-            if (signBlock != null) { // 牌子为空一般为子关联
-                relateBlocks.add(signBlock);
-            }
             this.traceRelateBlocks(); // 追溯
             for (Relate relate : subRelate) { // 子关联
                 relateBlocks.addAll(relate.getRelateBlocks());
@@ -52,6 +49,15 @@ public abstract class Relate {
             trace = true;
         }
         return relateBlocks;
+    }
+
+    /**
+     * 获取牌子方块，子关联的牌子方块为null
+     * @return 牌子方块
+     */
+    @Nullable
+    public Block getSignBlock() {
+        return signBlock;
     }
 
 }

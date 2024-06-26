@@ -1,7 +1,5 @@
 package io.fireflyest.relatelock.util;
 
-import java.util.HashMap;
-import java.util.Map;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
@@ -14,10 +12,9 @@ import org.bukkit.inventory.ItemStack;
  */
 public final class SerializationUtils {
 
-    private static final String DATA_PATH = "root";
+    public static final String DATA_PATH = "yaml";
 
     // 缓存解析
-    private static final Map<String, ItemStack> stackCrashMap = new HashMap<>();
     private static final YamlConfiguration yaml = new YamlConfiguration();
 
     private SerializationUtils() {
@@ -55,9 +52,7 @@ public final class SerializationUtils {
      * @return 文本数据
      */
     public static String serializeItemStack(ItemStack itemStack) {
-        final String data = serialize(itemStack);
-        stackCrashMap.put(data, itemStack.clone());
-        return data;
+        return serialize(itemStack);
     }
 
     /**
@@ -66,15 +61,7 @@ public final class SerializationUtils {
      * @return 物品
      */
     public static ItemStack deserializeItemStack(String stackData) {
-        // 解析物品堆
-        final ItemStack stack;
-        if (stackCrashMap.containsKey(stackData)) {
-            stack = stackCrashMap.get(stackData).clone();
-        } else {
-            stack = deserialize(stackData, ItemStack.class);
-            stackCrashMap.put(stackData, stack.clone());
-        }
-        return stack;
+        return deserialize(stackData, ItemStack.class);
     }
 
 }

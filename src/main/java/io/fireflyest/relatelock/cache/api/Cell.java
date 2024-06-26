@@ -25,12 +25,6 @@ public interface Cell<T> {
     Set<T> getAll();
 
     /**
-     * 拼接值，集合添加，单值拼接字符串
-     * @param value 值
-     */
-    void append(T value);
-    
-    /**
      * 数据剩余保留时间，如果没有限制，返回-1；如果到期，返回0
      * @return 剩余毫秒
      */
