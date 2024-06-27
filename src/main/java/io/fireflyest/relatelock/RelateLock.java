@@ -17,6 +17,8 @@ import io.fireflyest.relatelock.listener.LockEventListener;
  */
 public final class RelateLock extends JavaPlugin {
 
+    private LocksmithImpl locksmith;
+
     public RelateLock() {
         //
     }
@@ -34,7 +36,8 @@ public final class RelateLock extends JavaPlugin {
                                          configFile.getString("shareString"));
 
         // 锁服务
-        final LocksmithImpl locksmith = new LocksmithImpl();
+        this.locksmith = new LocksmithImpl();
+        this.locksmith.load(this);
         this.getServer().getServicesManager()
             .register(Locksmith.class, locksmith, this, ServicePriority.Normal);
 
@@ -45,6 +48,7 @@ public final class RelateLock extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        this.locksmith.save(this);
         // close data service
         
     }

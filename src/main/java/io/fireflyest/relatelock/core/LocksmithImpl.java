@@ -13,6 +13,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.block.TileState;
 import org.bukkit.block.data.Directional;
+import org.bukkit.plugin.java.JavaPlugin;
 import com.google.common.base.Objects;
 import io.fireflyest.relatelock.bean.Lock;
 import io.fireflyest.relatelock.cache.LocationOrganism;
@@ -41,6 +42,32 @@ public class LocksmithImpl implements Locksmith {
      */
     private final LockOrganism lockOrg = new LockOrganism("lock");
 
+    public LocksmithImpl() {
+        //
+    }
+
+    /**
+     * 加载数据
+     * @param plugin 插件
+     */
+    public void load(JavaPlugin plugin) {
+        this.locationOrg.load(plugin);
+        this.lockOrg.load(plugin);
+        // 方块上锁
+        for (Location location : this.locationOrg.keySet()) {
+            final Chunk chunk = location.getChunk();
+            locationMap.computeIfAbsent(chunk, k -> new HashSet<>()).add(location);
+        }
+    }
+
+    /**
+     * 保存数据
+     * @param plugin 插件
+     */
+    public void save(JavaPlugin plugin) {
+        this.locationOrg.save(plugin);
+        this.lockOrg.save(plugin);
+    }
 
     @Override
     public boolean lock(@Nonnull Block signBlock, @Nonnull Lock lock) {
@@ -152,8 +179,7 @@ public class LocksmithImpl implements Locksmith {
     private void lockLocation(@Nonnull Location location, @Nonnull Location signLocation) {
         // 锁
         final Chunk chunk = location.getChunk();
-        final Set<Location> lockedSet = locationMap.computeIfAbsent(chunk, k -> new HashSet<>());
-        lockedSet.add(location);
+        locationMap.computeIfAbsent(chunk, k -> new HashSet<>()).add(location);
         // 关联
         locationOrg.set(location, signLocation);
         locationOrg.sadd(signLocation, location);
@@ -167,8 +193,7 @@ public class LocksmithImpl implements Locksmith {
     private void unlockLocation(@Nonnull Location location, @Nonnull Location signLocation) {
         // 解锁
         final Chunk chunk = location.getChunk();
-        final Set<Location> lockedSet = locationMap.computeIfAbsent(chunk, k -> new HashSet<>());
-        lockedSet.remove(location);
+        locationMap.computeIfAbsent(chunk, k -> new HashSet<>()).remove(location);
         // 解关联
         locationOrg.del(location);
         locationOrg.srem(signLocation, location);

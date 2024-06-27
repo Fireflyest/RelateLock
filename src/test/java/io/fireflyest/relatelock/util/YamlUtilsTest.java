@@ -33,8 +33,4 @@ public class YamlUtilsTest {
 
     }
 
-    @Test
-    public void testTest() {
-        YamlUtils.test();
-    }
 }
