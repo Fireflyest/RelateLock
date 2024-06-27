@@ -1,16 +1,25 @@
 package io.fireflyest.relatelock;
 
-import java.io.IOException;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import io.fireflyest.relatelock.config.Config;
+import io.fireflyest.relatelock.core.LocksmithImpl;
+import io.fireflyest.relatelock.core.api.Locksmith;
 import io.fireflyest.relatelock.listener.LockEventListener;
 
+/**
+ * 关联锁插件
+ * 
+ * @author Fireflyest
+ * @since 1.0
+ */
 public final class RelateLock extends JavaPlugin {
-    
-    private final Logger logger = LogManager.getLogger(this.getClass());
+
+    public RelateLock() {
+        //
+    }
 
     public static RelateLock getPlugin() {
         return getPlugin(RelateLock.class);
@@ -19,51 +28,19 @@ public final class RelateLock extends JavaPlugin {
     @Override
     public void onEnable() {
         Print.RELATE_LOCK.onDebug();
-        logger.warn("ee {}hello world!{} aa", "\033[32;1m", "\033[0m");
-        try {
-            for (int i = 0; i < 64; i++) {
-                for (int j = 0; j < 64; j++) {
-                    Thread.sleep(1);
-                    logger.info(color("test {}", i), i);
-                }
-                throw new IOException();
-            }
-        } catch (InterruptedException | IOException e) {
-            Print.RELATE_LOCK.catching(e);
-            Print.RELATE_LOCK.info("------");
-            for (StackTraceElement stackTrace : e.getStackTrace()) {
-                Print.RELATE_LOCK.debug(stackTrace.toString() + " --- ");
-            }
-        }
-        
-        // this.test();
 
-        this.getServer().getPluginManager().registerEvents(new LockEventListener(), this);
-    }
+        final FileConfiguration configFile = this.getConfig();
+        final Config config = new Config(configFile.getString("lockString"), 
+                                         configFile.getString("shareString"));
 
-    private String color(String text, int color1) {
-        return String.format("\033[%dm", color1) + text + "\033[0m";
-    }
+        // 锁服务
+        final LocksmithImpl locksmith = new LocksmithImpl();
+        this.getServer().getServicesManager()
+            .register(Locksmith.class, locksmith, this, ServicePriority.Normal);
 
-    public static void test() {
-        try {
-            for (StackTraceElement stackTrace : Thread.currentThread().getStackTrace()) {
-                final String className = stackTrace.getClassName();
-                final Class<?> aClass = Class.forName(className);
-                if (JavaPlugin.class.isAssignableFrom(aClass)) {
-                    System.out.println(stackTrace.toString());
-                    break;
-                }
-            }
-            throw new IOException();
-        } catch (Exception e) {
-            
-            Print.RELATE_LOCK.catching(e);
-            for (StackTraceElement stackTrace : e.getStackTrace()) {
-                System.out.println(stackTrace.toString());
-            }
-        }
-        
+        // 事件监听
+        this.getServer().getPluginManager()
+            .registerEvents(new LockEventListener(locksmith, config), this);
     }
 
     @Override
@@ -71,4 +48,5 @@ public final class RelateLock extends JavaPlugin {
         // close data service
         
     }
+
 }

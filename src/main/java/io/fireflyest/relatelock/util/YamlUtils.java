@@ -1,6 +1,10 @@
 package io.fireflyest.relatelock.util;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
+
 import javax.annotation.Nonnull;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -8,6 +12,8 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import io.fireflyest.relatelock.Print;
 
 /**
  * 配置文件工具类
@@ -92,6 +98,18 @@ public final class YamlUtils {
             plugin.saveResource(child, false);
         }
         return YamlConfiguration.loadConfiguration(file);
+    }
+
+    public static void test() {
+        File file = new File("E:\\Project\\Spigot\\RelateLock\\src\\main\\resources\\config.yml");
+        YamlConfiguration configuration = YamlConfiguration.loadConfiguration(file);
+        for (Entry<String,Object> entrySet : configuration.getValues(true).entrySet()) {
+            System.out.println(entrySet.getKey() + " = " + entrySet.getValue());
+            if (entrySet.getValue().getClass().equals(ArrayList.class)) {
+                List<String> strings = StringUtils.jsonToList(entrySet.getValue().toString());
+                strings.forEach(System.out::println);
+            }
+        }
     }
 
 }

@@ -4,13 +4,16 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
 import org.bukkit.block.Lockable;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -18,18 +21,44 @@ import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 
+import io.fireflyest.relatelock.bean.Lock;
+import io.fireflyest.relatelock.config.Config;
+import io.fireflyest.relatelock.core.api.Locksmith;
+
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class LockEventListener implements Listener {
 
+    private final Locksmith locksmith;
+    private final Config config;
+
+    public LockEventListener(Locksmith locksmith, Config config) {
+        this.locksmith = locksmith;
+        this.config = config;
+    }
 
     @EventHandler
     public void onSignChange(SignChangeEvent event){
-        // if(event.isCancelled())return;
-        // String[] lines = event.getLines();
+        
+        if (event.isCancelled()) {
+            return;
+        }
 
+        // 0-3
+        final Player player = event.getPlayer();
+        final String[] lines = event.getLines();
+        if (config.lockString().equals(lines[0])) {
+            final String uid = player.getUniqueId().toString();
+            final Lock lock = new Lock(uid, Instant.now().toEpochMilli(), "normal", null);
+            final boolean result = locksmith.lock(event.getBlock(), lock);
+            if (result) {
+                event.setLine(0, "🔒[§l" + player.getName() + "§r]");
+                player.playSound(player, Sound.BLOCK_IRON_DOOR_CLOSE, 1, 1);
+            }
+        }
         // // 判断是否容器
         // Directional data = (Directional)event.getBlock().getBlockData();
         // Block block = event.getBlock().getLocation().add(data.getFacing().getOppositeFace().getDirection()).getBlock();
@@ -42,9 +71,9 @@ public class LockEventListener implements Listener {
         // if("lock".equalsIgnoreCase(lines[0])) {
         //     // 上锁
         //     if(LockUtils.addLock(container, name, lines[2], lines[3])){
-        //         event.setLine(0, "§f[§aLock§f]");
-        //         event.setLine(1, name);
-        //         event.getPlayer().spigot().sendMessage(ChatMessageType.ACTION_BAR, new ComponentBuilder("成功给该容器上锁").create());
+                // event.setLine(0, "§f[§aLock§f]");
+                // event.setLine(1, name);
+                event.getPlayer().spigot().sendMessage(ChatMessageType.ACTION_BAR, new ComponentBuilder("成功给该容器上锁").create());
         //     }else {
         //         event.setLine(0, "§f[§cError§f]");
         //         event.setLine(1, "容器已被锁");
@@ -93,6 +122,32 @@ public class LockEventListener implements Listener {
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event){
+
+        if (event.isCancelled()) {
+            return;
+        }
+
+        final Location location = event.getBlock().getLocation();
+
+        // 如果是有锁的方块
+        if (locksmith.isLocationLocked(location)) {
+            final Player player = event.getPlayer();
+            final String uid = player.getUniqueId().toString();
+            final boolean result = locksmith.destroy(location, uid, player.getName());
+            if (result) {
+                event.getPlayer().spigot()
+                     .sendMessage(ChatMessageType.ACTION_BAR, new ComponentBuilder("已解除锁")
+                     .create());
+            } else {
+                event.getPlayer().spigot()
+                     .sendMessage(ChatMessageType.ACTION_BAR, new ComponentBuilder("已被上锁")
+                     .create());
+                event.setCancelled(true);
+            }
+        }
+
+        
+
         // Block block;
         // if (event.getBlock().getState() instanceof Container){
         //     block = event.getBlock();
@@ -112,6 +167,9 @@ public class LockEventListener implements Listener {
 
     @EventHandler
     public void onChunkLoad(ChunkLoadEvent event) {
+
+
+
         for (BlockState tileEntitie : event.getChunk().getTileEntities()) {
             System.out.println(tileEntitie.getType().name());
         }

@@ -10,8 +10,6 @@ import java.util.Set;
  */
 public class Lock {
     
-    private String location;
-
     // 拥有者uuid
     private String owner;
 
@@ -47,8 +45,7 @@ public class Lock {
      * @param type 锁类型
      * @param data 锁数据
      */
-    public Lock(String location, String owner, long outset, String type, String data) {
-        this.location = location;
+    public Lock(String owner, long outset, String type, String data) {
         this.owner = owner;
         this.outset = outset;
         this.type = type;
@@ -56,14 +53,6 @@ public class Lock {
         this.manager = new HashSet<>();
         this.share = new HashSet<>();
         this.log = new HashSet<>();
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
     }
 
     public String getOwner() {

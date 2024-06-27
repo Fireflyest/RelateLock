@@ -1,0 +1,15 @@
+int: 1
+long: 100L
+double: 0.5
+colora: #FFFFFF
+boolean: true
+aaa: "aaaa"
+aaac: 
+  nnn: "nnn"
+  mmm: "mmm"
+bbb: 
+  - "aaa"
+  - "bbb"
+
+LockString: lock
+ShareString: lock

@@ -49,4 +49,11 @@ public interface Locksmith {
      */
     boolean destroy(@Nonnull Location location, @Nonnull String uid, @Nonnull String name);
 
+    /**
+     * 获取某位置的方块是否被上锁
+     * @param location 位置
+     * @return 是否上锁
+     */
+    boolean isLocationLocked(@Nonnull Location location);
+
 }

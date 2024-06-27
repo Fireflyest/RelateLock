@@ -113,39 +113,33 @@ public class LocksmithImpl implements Locksmith {
     @Override
     public boolean destroy(@Nonnull Location location, @Nonnull String uid, @Nonnull String name) {
         boolean access = true;
-        if (this.isLocationLocked(location)) {
-            if (locationOrg.scard(location) == 1) { // 关联方块
-                // 获取锁
-                final Location signLocation = locationOrg.get(location);
-                final Lock lock = lockOrg.get(signLocation);
-                // 判断是否有权限
-                access = Objects.equal(lock.getOwner(), uid);
-                // 解除锁
-                if (access) {
-                    this.unlockLocation(location, signLocation);
-                }   
-                // 日志
-                lock.getLog().add(LocalDate.now().toString() + " " + name + " destroy:" + access);
-            } else if (locationOrg.scard(location) > 1) { // 牌子
-                // 获取锁
-                final Lock lock = lockOrg.get(location);
-                // 判断是否有权限
-                access = Objects.equal(lock.getOwner(), uid);
-                if (access) {
-                    this.unlock(location);
-                    lockOrg.del(location);
-                }
+        if (locationOrg.scard(location) == 1) { // 关联方块
+            // 获取锁
+            final Location signLocation = locationOrg.get(location);
+            final Lock lock = lockOrg.get(signLocation);
+            // 判断是否有权限
+            access = Objects.equal(lock.getOwner(), uid);
+            // 解除锁
+            if (access) {
+                this.unlockLocation(location, signLocation);
+            }   
+            // 日志
+            lock.getLog().add(LocalDate.now().toString() + " " + name + " destroy:" + access);
+        } else if (locationOrg.scard(location) > 1) { // 牌子
+            // 获取锁
+            final Lock lock = lockOrg.get(location);
+            // 判断是否有权限
+            access = Objects.equal(lock.getOwner(), uid);
+            if (access) {
+                this.unlock(location);
+                lockOrg.del(location);
             }
         }
         return access;
     }
-    
-    /**
-     * 方块是否上锁
-     * @param location 位置
-     * @return 是否上锁
-     */
-    private boolean isLocationLocked(@Nonnull Location location) {
+
+    @Override
+    public boolean isLocationLocked(@Nonnull Location location) {
         final Set<Location> lockedSet = locationMap.get(location.getChunk());
         return lockedSet != null && lockedSet.contains(location);
     }

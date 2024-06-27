@@ -96,7 +96,7 @@ $RECYCLE.BIN/
 *.lnk
 
 target/
-test/
+.vscode/
 
 pom.xml.tag
 pom.xml.releaseBackup
