@@ -102,8 +102,8 @@ public class LocksmithImpl implements Locksmith {
             final Lock lock = lockOrg.get(signLocation);
             // 判断是否有权限
             access = Objects.equal(lock.getOwner(), uid)
-                                || lock.getShare().contains(uid)
-                                || lock.getManager().contains(uid);
+                  || lock.getShare().contains(uid)
+                  || lock.getManager().contains(uid);
             // 日志
             lock.getLog().add(LocalDate.now().toString() + " " + name + " use:" + access);
         }

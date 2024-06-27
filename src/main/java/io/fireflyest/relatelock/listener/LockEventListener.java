@@ -11,13 +11,17 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Container;
 import org.bukkit.block.Lockable;
+import org.bukkit.block.TileState;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Directional;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.Event.Result;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.block.SignChangeEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 
@@ -28,6 +32,7 @@ import io.fireflyest.relatelock.core.api.Locksmith;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 public class LockEventListener implements Listener {
@@ -47,9 +52,9 @@ public class LockEventListener implements Listener {
             return;
         }
 
-        // 0-3
         final Player player = event.getPlayer();
         final String[] lines = event.getLines();
+        // 0-3
         if (config.lockString().equals(lines[0])) {
             final String uid = player.getUniqueId().toString();
             final Lock lock = new Lock(uid, Instant.now().toEpochMilli(), "normal", null);
@@ -118,6 +123,30 @@ public class LockEventListener implements Listener {
         //         || !(event.getClickedBlock().getState() instanceof Container))return;
         // Container container = (Container)event.getClickedBlock().getState();
         // LockUtils.use(container, event.getPlayer());
+
+        if (event.useInteractedBlock() == Result.DENY) {
+            return;
+        }
+
+        final Block block = event.getClickedBlock();
+        if (block != null && locksmith.isLocationLocked(block.getLocation()) 
+                          && block.getState() instanceof TileState) {
+            final Player player = event.getPlayer();
+            final String uid = player.getUniqueId().toString();
+            final boolean result = locksmith.use(block.getLocation(), uid, player.getName());
+            if (result) {
+                // TODO: 开门
+                event.getPlayer().spigot()
+                     .sendMessage(ChatMessageType.ACTION_BAR, new ComponentBuilder("允许使用")
+                     .create());
+            } else {
+                event.getPlayer().spigot()
+                     .sendMessage(ChatMessageType.ACTION_BAR, new ComponentBuilder("已被上锁")
+                     .create());
+                event.setCancelled(true);
+            }
+        }
+
     }
 
     @EventHandler
@@ -163,6 +192,28 @@ public class LockEventListener implements Listener {
         //     event.setCancelled(true);
         //     event.getPlayer().sendMessage(Language.TITLE + "容器已被锁");
         // }
+    }
+
+    @EventHandler
+    public void onBlockExplode(BlockExplodeEvent event) {
+        final Iterator<Block> iterator = event.blockList().iterator();
+        while (iterator.hasNext()) {
+            final Block block = iterator.next();
+            if (locksmith.isLocationLocked(block.getLocation())) {
+                iterator.remove();
+            }
+        }
+    }
+
+    @EventHandler
+    public void onEntityExplode(EntityExplodeEvent event) {
+        final Iterator<Block> iterator = event.blockList().iterator();
+        while (iterator.hasNext()) {
+            final Block block = iterator.next();
+            if (locksmith.isLocationLocked(block.getLocation())) {
+                iterator.remove();
+            }
+        }
     }
 
     @EventHandler

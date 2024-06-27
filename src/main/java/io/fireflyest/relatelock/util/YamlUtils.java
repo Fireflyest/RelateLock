@@ -22,7 +22,7 @@ import io.fireflyest.relatelock.Print;
  */
 public final class YamlUtils {
     
-    public static final String DATA_PATH = "yaml";
+    public static final String DATA_PATH = "root";
 
     // 缓存解析
     private static final YamlConfiguration yaml = new YamlConfiguration();
