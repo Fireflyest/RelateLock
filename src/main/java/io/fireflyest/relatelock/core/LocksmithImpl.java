@@ -10,11 +10,14 @@ import javax.annotation.Nonnull;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
-import org.bukkit.block.Chest;
 import org.bukkit.block.TileState;
+import org.bukkit.block.data.Bisected;
 import org.bukkit.block.data.Directional;
+import org.bukkit.block.data.type.Chest;
+import org.bukkit.block.data.type.Door;
 import org.bukkit.plugin.java.JavaPlugin;
 import com.google.common.base.Objects;
+import io.fireflyest.relatelock.Print;
 import io.fireflyest.relatelock.bean.Lock;
 import io.fireflyest.relatelock.cache.LocationOrganism;
 import io.fireflyest.relatelock.cache.LockOrganism;
@@ -77,16 +80,32 @@ public class LocksmithImpl implements Locksmith {
         
         // 获取关联
         final Relate relate;
-        if (attachBlock.getState() instanceof Chest) { // 箱子
+        if (attachBlock.getState().getBlockData() instanceof Chest) { // 箱子
+            Print.RELATE_LOCK.debug("LocksmithImpl.lock() -> chest");
             relate = new ChestRelate(signBlock, attachBlock);
-        } else if (attachBlock.getState() instanceof TileState) { // 除了箱子外的可操作方块
+        } else if (attachBlock.getState().getBlockData() instanceof Door) { //门，可能是多个上下分方块
+            Print.RELATE_LOCK.debug("LocksmithImpl.lock() -> door");
+            relate = new DoorRelate(signBlock, attachBlock);
+        } else if (attachBlock.getBlockData() instanceof Bisected) { // 上下分方块
+            Print.RELATE_LOCK.debug("LocksmithImpl.lock() -> bisected");
+            relate = new BisectedRelate(signBlock, attachBlock);
+        } else if (attachBlock.getState() instanceof TileState) { // 其他可更新方块
+            Print.RELATE_LOCK.debug("LocksmithImpl.lock() -> tile");
             relate = new TileRelate(signBlock, attachBlock);
         } else { // 上锁贴着方块附近的方块
+            Print.RELATE_LOCK.debug("LocksmithImpl.lock() -> block");
             relate = new BlockRelate(signBlock, attachBlock);
         }
 
+        final Set<Block> relateBlocks = relate.getRelateBlocks();
+
+        // 无可锁方块
+        if (relateBlocks.isEmpty()) {
+            return false;
+        }
+
         // 判断是否全可锁
-        for (Block relateBlock : relate.getRelateBlocks()) {
+        for (Block relateBlock : relateBlocks) {
             if (this.isLocationLocked(relateBlock.getLocation())) {
                 return false;
             }
@@ -98,7 +117,7 @@ public class LocksmithImpl implements Locksmith {
         lockOrg.set(signLocation, lock);
         
         // 上锁所有方块
-        for (Block relateBlock : relate.getRelateBlocks()) {
+        for (Block relateBlock : relateBlocks) {
             this.lockLocation(relateBlock.getLocation(), signLocation);
         }
         return true;
@@ -109,11 +128,16 @@ public class LocksmithImpl implements Locksmith {
         // 解除所有关联方块位置锁
         final Set<Location> smembers = locationOrg.smembers(signLocation);
         if (smembers != null) {
-            final Iterator<Location> iterator = locationOrg.smembers(signLocation).iterator();
+            final Iterator<Location> iterator = smembers.iterator();
             while (iterator.hasNext()) {
                 final Location next = iterator.next();
                 if (!next.equals(signLocation)) {
-                    this.unlockLocation(next, signLocation);
+                    // 解锁
+                    final Chunk chunk = next.getChunk();
+                    locationMap.computeIfAbsent(chunk, k -> new HashSet<>()).remove(next);
+                    // 解关联
+                    locationOrg.del(next);
+                    iterator.remove();
                 }
             }
         }
@@ -127,6 +151,10 @@ public class LocksmithImpl implements Locksmith {
             // 获取锁
             final Location signLocation = locationOrg.get(location);
             final Lock lock = lockOrg.get(signLocation);
+            if (lock == null) {
+                Print.RELATE_LOCK.error("This block is locked, but the lock data is null!");
+                return access;
+            }
             // 判断是否有权限
             access = Objects.equal(lock.getOwner(), uid)
                   || lock.getShare().contains(uid)
@@ -144,6 +172,10 @@ public class LocksmithImpl implements Locksmith {
             // 获取锁
             final Location signLocation = locationOrg.get(location);
             final Lock lock = lockOrg.get(signLocation);
+            if (lock == null) {
+                Print.RELATE_LOCK.error("This block is locked, but the lock data is null!");
+                return access;
+            }
             // 判断是否有权限
             access = Objects.equal(lock.getOwner(), uid);
             // 解除锁
@@ -155,6 +187,10 @@ public class LocksmithImpl implements Locksmith {
         } else if (locationOrg.scard(location) > 1) { // 牌子
             // 获取锁
             final Lock lock = lockOrg.get(location);
+            if (lock == null) {
+                Print.RELATE_LOCK.error("This block is locked, but the lock data is null!");
+                return access;
+            }
             // 判断是否有权限
             access = Objects.equal(lock.getOwner(), uid);
             if (access) {

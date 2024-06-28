@@ -3,9 +3,9 @@ package io.fireflyest.relatelock.core;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.bukkit.block.Block;
-import org.bukkit.block.Container;
-import org.bukkit.inventory.DoubleChestInventory;
-import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.block.data.type.Chest;
+import io.fireflyest.relatelock.Print;
+import io.fireflyest.relatelock.util.BlockUtils;
 
 /**
  * 箱子锁
@@ -20,20 +20,21 @@ public class ChestRelate extends Relate {
 
     @Override
     public void traceRelateBlocks() {
-        if (attachBlock.getState() instanceof Container container) {
-            if (container.getInventory() instanceof DoubleChestInventory doubleChestInventory) {
-                // 大箱子的两边
-                final InventoryHolder leftHolder = doubleChestInventory.getLeftSide().getHolder();
-                final InventoryHolder rightHolder = doubleChestInventory.getRightSide().getHolder();
-                if (leftHolder instanceof Block block) {
-                    subRelate.add(new ContainerRelate(null, block));
-                }
-                if (rightHolder instanceof Block block) {
-                    subRelate.add(new ContainerRelate(null, block));
-                }
-            } else {
-                // 小箱子
-                subRelate.add(new ContainerRelate(null, attachBlock));
+        if (attachBlock.getState().getBlockData() instanceof Chest chest) {
+            // 自己
+            Print.RELATE_LOCK.debug("ChestRelate.traceRelateBlocks() -> chest");
+            subRelate.add(new ContainerRelate(null, attachBlock));
+
+            // 另一半
+            final Block anotherChest = switch (chest.getType()) {
+                case LEFT -> attachBlock.getRelative(BlockUtils.rightFace(chest.getFacing()));
+                case RIGHT -> attachBlock.getRelative(BlockUtils.leftFace(chest.getFacing()));
+                case SINGLE -> null;
+                default -> null;
+            };
+            if (anotherChest != null && anotherChest.getState().getBlockData() instanceof Chest) {
+                Print.RELATE_LOCK.debug("ChestRelate.traceRelateBlocks() -> chest");
+                subRelate.add(new ContainerRelate(null, anotherChest));
             }
         }
     }

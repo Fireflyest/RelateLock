@@ -69,14 +69,19 @@ public final class YamlUtils {
         return deserialize(stackData, ItemStack.class);
     }
 
+    public static FileConfiguration getConfig(@Nonnull JavaPlugin plugin) {
+        plugin.saveDefaultConfig();
+        return plugin.getConfig();
+    }
+
     /**
      * 更新配置的值
      * @param plugin 插件
      * @param key 键
-     * @param value 值
+     * @param obj 值
      */
-    public void setConfigData(@Nonnull JavaPlugin plugin, @Nonnull String key, Object value) {
-        plugin.getConfig().set(key, value);
+    public static void setConfigData(@Nonnull JavaPlugin plugin, @Nonnull String key, Object obj) {
+        plugin.getConfig().set(key, obj);
         plugin.saveConfig();
     }
 

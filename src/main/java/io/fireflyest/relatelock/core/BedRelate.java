@@ -3,9 +3,8 @@ package io.fireflyest.relatelock.core;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.block.data.Directional;
 import org.bukkit.block.data.type.Bed;
+import io.fireflyest.relatelock.Print;
 
 /**
  * 床
@@ -20,22 +19,20 @@ public class BedRelate extends Relate {
 
     @Override
     public void traceRelateBlocks() {
-        if (attachBlock.getBlockData() instanceof Bed bed) {
+        if (attachBlock.getState().getBlockData() instanceof Bed bed) {
             // 自己
+            Print.RELATE_LOCK.debug("BedRelate.traceRelateBlocks() -> half");
             relateBlocks.add(attachBlock);
-            // 另一部分
-            final Directional directional = ((Directional) attachBlock.getState());
-            final BlockFace face = switch (bed.getPart()) {
-                case HEAD -> directional.getFacing();
-                case FOOT -> directional.getFacing().getOppositeFace();
+
+            // 另一部分，床头是朝向
+            final Block otherPart = switch (bed.getPart()) {
+                case HEAD -> attachBlock.getRelative(bed.getFacing().getOppositeFace());
+                case FOOT -> attachBlock.getRelative(bed.getFacing());
                 default -> null;
             };
-            if (face != null) {
-                final Block otherPart = attachBlock.getRelative(face);
-                // 某些情况下床只有一半
-                if (attachBlock.getBlockData() instanceof Bed) {
-                    relateBlocks.add(otherPart);
-                }
+            if (otherPart != null && otherPart.getState().getBlockData() instanceof Bed) {
+                Print.RELATE_LOCK.debug("BedRelate.traceRelateBlocks() -> half");
+                relateBlocks.add(otherPart);
             }
         }
     }

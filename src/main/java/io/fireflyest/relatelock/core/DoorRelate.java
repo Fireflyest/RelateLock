@@ -3,9 +3,8 @@ package io.fireflyest.relatelock.core;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.type.Door;
-
+import io.fireflyest.relatelock.Print;
 import io.fireflyest.relatelock.util.BlockUtils;
 
 /**
@@ -21,18 +20,20 @@ public class DoorRelate extends Relate {
 
     @Override
     public void traceRelateBlocks() {
-        if (attachBlock.getBlockData() instanceof Door door) {
+        if (attachBlock.getState().getBlockData() instanceof Door door) {
             // 自己
+            Print.RELATE_LOCK.debug("DoorRelate.traceRelateBlocks() -> door");
             subRelate.add(new BisectedRelate(null, attachBlock));
+
             // 另一扇门
-            final BlockFace face = switch (door.getHinge()) {
-                case LEFT -> BlockUtils.rightFace(door.getFacing());
-                case RIGHT -> BlockUtils.leftFace(door.getFacing());
+            final Block anotherDoor = switch (door.getHinge()) {
+                case LEFT -> attachBlock.getRelative(BlockUtils.rightFace(door.getFacing()));
+                case RIGHT -> attachBlock.getRelative(BlockUtils.leftFace(door.getFacing()));
                 default -> null;
             };
-            if (face != null) {
-                final Block otherDoor = attachBlock.getRelative(face);
-                subRelate.add(new BisectedRelate(null, otherDoor));
+            if (anotherDoor != null && anotherDoor.getState().getBlockData() instanceof Door) {
+                Print.RELATE_LOCK.debug("DoorRelate.traceRelateBlocks() -> door");
+                subRelate.add(new BisectedRelate(null, anotherDoor));
             }
         }
     }

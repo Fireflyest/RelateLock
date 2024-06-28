@@ -213,6 +213,9 @@ public class LocationOrganism implements Organism<Location, Location> {
     public void load(@Nonnull Plugin plugin) {
         final String fileName = String.format("%s.cache", name);
         final File cacheFile = new File(plugin.getDataFolder(), fileName);
+        if (!cacheFile.exists()) {
+            return;
+        }
         try (FileInputStream fStream = new FileInputStream(cacheFile);
                 DataInputStream dStream = new DataInputStream(fStream)) {
             
