@@ -60,10 +60,10 @@ public class BlockRelate extends Relate {
      */
     private boolean tryLock(@Nonnull Block block) {
         boolean lockable = true;
-        if (block.getState().getBlockData() instanceof Chest) { // 箱子
+        if (block.getBlockData() instanceof Chest) { // 箱子
             Print.RELATE_LOCK.debug("BlockRelate.tryLock() -> chest");
             subRelate.add(new ChestRelate(null, block));
-        } else if (block.getState().getBlockData() instanceof Door) { //门，可能是多个上下分方块
+        } else if (block.getBlockData() instanceof Door) { //门，可能是多个上下分方块
             Print.RELATE_LOCK.debug("BlockRelate.tryLock() -> door");
             subRelate.add(new DoorRelate(null, block));
         } else if (block.getBlockData() instanceof Bisected) { // 上下分方块

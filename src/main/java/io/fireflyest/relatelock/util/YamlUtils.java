@@ -69,6 +69,11 @@ public final class YamlUtils {
         return deserialize(stackData, ItemStack.class);
     }
 
+    /**
+     * 获取配置文件
+     * @param plugin 插件
+     * @return 配置文件
+     */
     public static FileConfiguration getConfig(@Nonnull JavaPlugin plugin) {
         plugin.saveDefaultConfig();
         return plugin.getConfig();

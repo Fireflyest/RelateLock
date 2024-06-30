@@ -10,8 +10,24 @@ import org.bukkit.Location;
  */
 public final class Result {
     
-    // private final boolean access;
+    /**
+     * 是否通过
+     */
+    private final boolean access;
+
+    /**
+     * 操作所需权限等级
+     */
+    private final int permission;
+    // private final 操作;
+
+
+    public Result(boolean access, int permission) {
+        this.access = access;
+        this.permission = permission;
+    }
 
     // private final Location location;
 
+    
 }

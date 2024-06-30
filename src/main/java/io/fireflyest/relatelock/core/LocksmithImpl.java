@@ -80,10 +80,10 @@ public class LocksmithImpl implements Locksmith {
         
         // 获取关联
         final Relate relate;
-        if (attachBlock.getState().getBlockData() instanceof Chest) { // 箱子
+        if (attachBlock.getBlockData() instanceof Chest) { // 箱子
             Print.RELATE_LOCK.debug("LocksmithImpl.lock() -> chest");
             relate = new ChestRelate(signBlock, attachBlock);
-        } else if (attachBlock.getState().getBlockData() instanceof Door) { //门，可能是多个上下分方块
+        } else if (attachBlock.getBlockData() instanceof Door) { //门，可能是多个上下分方块
             Print.RELATE_LOCK.debug("LocksmithImpl.lock() -> door");
             relate = new DoorRelate(signBlock, attachBlock);
         } else if (attachBlock.getBlockData() instanceof Bisected) { // 上下分方块
@@ -152,13 +152,15 @@ public class LocksmithImpl implements Locksmith {
             final Location signLocation = locationOrg.get(location);
             final Lock lock = lockOrg.get(signLocation);
             if (lock == null) {
-                Print.RELATE_LOCK.error("This block is locked, but the lock data is null!");
                 return access;
             }
             // 判断是否有权限
             access = Objects.equal(lock.getOwner(), uid)
                   || lock.getShare().contains(uid)
                   || lock.getManager().contains(uid);
+            if (access) {
+                this.useLocation(location);
+            }
             // 日志
             lock.getLog().add(LocalDate.now().toString() + " " + name + " use:" + access);
         }
@@ -171,9 +173,12 @@ public class LocksmithImpl implements Locksmith {
         if (locationOrg.scard(location) == 1) { // 关联方块
             // 获取锁
             final Location signLocation = locationOrg.get(location);
+            // 多关联的情况下需要先解锁再破坏
+            if (locationOrg.scard(signLocation) > 2) {
+                return false;
+            }
             final Lock lock = lockOrg.get(signLocation);
             if (lock == null) {
-                Print.RELATE_LOCK.error("This block is locked, but the lock data is null!");
                 return access;
             }
             // 判断是否有权限
@@ -181,6 +186,7 @@ public class LocksmithImpl implements Locksmith {
             // 解除锁
             if (access) {
                 this.unlockLocation(location, signLocation);
+                this.unlockLocation(signLocation, signLocation);
             }   
             // 日志
             lock.getLog().add(LocalDate.now().toString() + " " + name + " destroy:" + access);
@@ -188,7 +194,6 @@ public class LocksmithImpl implements Locksmith {
             // 获取锁
             final Lock lock = lockOrg.get(location);
             if (lock == null) {
-                Print.RELATE_LOCK.error("This block is locked, but the lock data is null!");
                 return access;
             }
             // 判断是否有权限
@@ -233,6 +238,27 @@ public class LocksmithImpl implements Locksmith {
         // 解关联
         locationOrg.del(location);
         locationOrg.srem(signLocation, location);
+    }
+
+    /**
+     * 使用方块
+     * @param location 方块位置
+     */
+    private void useLocation(@Nonnull Location location) {
+        final Location signLocation = locationOrg.get(location);
+
+        Boolean isOpen = null;
+        for (Location useLocation : locationOrg.smembers(signLocation)) {
+            final Block block = useLocation.getBlock();
+            if (block.getBlockData() instanceof Door door) { //门
+                if (isOpen == null) {
+                    isOpen = !door.isOpen();
+                }
+                door.setOpen(isOpen);
+                block.setBlockData(door);
+                Print.RELATE_LOCK.debug("LocksmithImpl.useLocation() -> door open:{}", isOpen);
+            }
+        }
     }
 
 }

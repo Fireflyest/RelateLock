@@ -56,7 +56,7 @@ public class LockOrganism implements Organism<Location, Lock> {
 
     @Override
     public boolean exist(@Nonnull Location key) {
-        return cacheMap.containsKey(key) && cacheMap.get(key) != null;
+        return cacheMap.containsKey(key) && cacheMap.get(key).get() != null;
     }
 
     @Override

@@ -20,7 +20,7 @@ public class DoorRelate extends Relate {
 
     @Override
     public void traceRelateBlocks() {
-        if (attachBlock.getState().getBlockData() instanceof Door door) {
+        if (attachBlock.getBlockData() instanceof Door door) {
             // 自己
             Print.RELATE_LOCK.debug("DoorRelate.traceRelateBlocks() -> door");
             subRelate.add(new BisectedRelate(null, attachBlock));
@@ -31,7 +31,7 @@ public class DoorRelate extends Relate {
                 case RIGHT -> attachBlock.getRelative(BlockUtils.leftFace(door.getFacing()));
                 default -> null;
             };
-            if (anotherDoor != null && anotherDoor.getState().getBlockData() instanceof Door) {
+            if (anotherDoor != null && anotherDoor.getBlockData() instanceof Door) {
                 Print.RELATE_LOCK.debug("DoorRelate.traceRelateBlocks() -> door");
                 subRelate.add(new BisectedRelate(null, anotherDoor));
             }
