@@ -1,6 +1,7 @@
 package io.fireflyest.relatelock.core;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -162,7 +163,7 @@ public class LocksmithImpl implements Locksmith {
                 this.useLocation(location);
             }
             // 日志
-            lock.getLog().add(LocalDate.now().toString() + " " + name + " use:" + access);
+            lock.getLog().add(LocalDateTime.now().toString() + " " + name + " use:" + access);
         }
         return access;
     }

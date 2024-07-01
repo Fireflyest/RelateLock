@@ -2,9 +2,14 @@ package io.fireflyest.relatelock;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Base64;
 
+import org.apache.logging.log4j.util.Base64Util;
 import org.bukkit.Location;
+import org.bukkit.util.StringUtil;
 import org.junit.Test;
+
+import io.fireflyest.relatelock.util.YamlUtils;
 
 public class RelateLockTest {
 
@@ -21,6 +26,13 @@ public class RelateLockTest {
 
     @Test
     public void enmuTest() {
+        Location location = new Location(null, 0, 0, 0);
+        String serialize = YamlUtils.serialize(location);
+        System.out.println(serialize);
+        String encodeToString = Base64.getEncoder().encodeToString(serialize.getBytes());
+        System.out.println(encodeToString);
+        String string = new String(Base64.getDecoder().decode(encodeToString));
+        System.out.println(string);
     }
 
 }

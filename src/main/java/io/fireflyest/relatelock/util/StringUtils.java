@@ -1,5 +1,6 @@
 package io.fireflyest.relatelock.util;
 
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -202,6 +203,26 @@ public final class StringUtils {
             sb.append(obj);
         }
         return sb.toString();
+    }
+
+    /**
+     * 转为Base64
+     * 
+     * @param str 文本
+     * @return Base64格式
+     */
+    public static String base64Encode(String str) {
+        return Base64.getEncoder().encodeToString(str.getBytes());
+    }
+
+    /**
+     * 转Base64为普通文本
+     * 
+     * @param str Base64格式文本
+     * @return 普通文本
+     */
+    public static String base64Decode(String str) {
+        return new String(Base64.getDecoder().decode(str));
     }
 
     /**

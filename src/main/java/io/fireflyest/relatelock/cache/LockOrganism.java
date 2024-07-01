@@ -3,8 +3,8 @@ package io.fireflyest.relatelock.cache;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -13,6 +13,9 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 import javax.annotation.Nonnull;
 import org.bukkit.Location;
 import org.bukkit.plugin.Plugin;
@@ -177,11 +180,15 @@ public class LockOrganism implements Organism<Location, Lock> {
      */
     @Override
     public void save(@Nonnull Plugin plugin) {
-        final String fileName = String.format("%s.cache", name);
+        final String fileName = String.format("%s.orga", name);
         final File cacheFile = new File(plugin.getDataFolder(), fileName);
         try (FileOutputStream fStream = new FileOutputStream(cacheFile);
-                DataOutputStream dStream = new DataOutputStream(fStream)) {
+                ZipOutputStream zStream = new ZipOutputStream(fStream);
+                DataOutputStream dStream = new DataOutputStream(zStream)) {
             
+            zStream.putNextEntry(new ZipEntry("latest"));
+            zStream.setComment("location lock");
+
             final Iterator<Entry<Location, LockCell>> iterator = cacheMap.entrySet().iterator(); 
             // 拼接数据   
             while (iterator.hasNext()) {
@@ -212,14 +219,15 @@ public class LockOrganism implements Organism<Location, Lock> {
 
     @Override
     public void load(@Nonnull Plugin plugin) {
-        final String fileName = String.format("%s.cache", name);
+        final String fileName = String.format("%s.orga", name);
         final File cacheFile = new File(plugin.getDataFolder(), fileName);
         if (!cacheFile.exists()) {
             return;
         }
-        try (FileInputStream fStream = new FileInputStream(cacheFile);
-                DataInputStream dStream = new DataInputStream(fStream)) {
-            
+        try (ZipFile zipFile = new ZipFile(cacheFile);
+                InputStream entryInputStream = zipFile.getInputStream(zipFile.getEntry("latest"));
+                DataInputStream dStream = new DataInputStream(entryInputStream)) {
+
             while (dStream.available() > 0) {
                 final String locationKey = dStream.readUTF();
                 final Instant born = Instant.ofEpochMilli(dStream.readLong());

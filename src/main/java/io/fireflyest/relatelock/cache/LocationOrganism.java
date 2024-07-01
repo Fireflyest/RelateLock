@@ -3,8 +3,8 @@ package io.fireflyest.relatelock.cache;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -13,10 +13,14 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 import javax.annotation.Nonnull;
 import org.bukkit.Location;
 import org.bukkit.plugin.Plugin;
 import io.fireflyest.relatelock.cache.api.Organism;
+import io.fireflyest.relatelock.util.StringUtils;
 import io.fireflyest.relatelock.util.YamlUtils;
 
 /**
@@ -175,11 +179,15 @@ public class LocationOrganism implements Organism<Location, Location> {
      */
     @Override
     public void save(@Nonnull Plugin plugin) {
-        final String fileName = String.format("%s.cache", name);
+        final String fileName = String.format("%s.orga", name);
         final File cacheFile = new File(plugin.getDataFolder(), fileName);
         try (FileOutputStream fStream = new FileOutputStream(cacheFile);
-                DataOutputStream dStream = new DataOutputStream(fStream)) {
+                ZipOutputStream zStream = new ZipOutputStream(fStream);
+                DataOutputStream dStream = new DataOutputStream(zStream)) {
             
+            zStream.putNextEntry(new ZipEntry("latest"));
+            zStream.setComment("location relate");
+
             final Iterator<Entry<Location, LocationCell>> iterator 
                 = cacheMap.entrySet().iterator(); 
             // 拼接数据   
@@ -194,13 +202,14 @@ public class LocationOrganism implements Organism<Location, Location> {
                     continue;
                 }
                 // 数据信息拼接
-                dStream.writeUTF(YamlUtils.serialize(entry.getKey())); // key
+                final String key = StringUtils.base64Encode(YamlUtils.serialize(entry.getKey()));
+                dStream.writeUTF(key); // key
                 dStream.writeLong(cacheCell.getBorn().toEpochMilli()); // 起始时间
                 dStream.writeLong(deadline == null ? 0 : deadline.toEpochMilli()); // 失效时间
                 dStream.writeInt(valueSet.size()); // 数据数量
                 // 数据集拼接
                 for (Location value : valueSet) {
-                    dStream.writeUTF(YamlUtils.serialize(value)); // 数据
+                    dStream.writeUTF(StringUtils.base64Encode(YamlUtils.serialize(value))); // 数据
                 }
             }
             dStream.flush();
@@ -211,23 +220,25 @@ public class LocationOrganism implements Organism<Location, Location> {
 
     @Override
     public void load(@Nonnull Plugin plugin) {
-        final String fileName = String.format("%s.cache", name);
+        final String fileName = String.format("%s.orga", name);
         final File cacheFile = new File(plugin.getDataFolder(), fileName);
         if (!cacheFile.exists()) {
             return;
         }
-        try (FileInputStream fStream = new FileInputStream(cacheFile);
-                DataInputStream dStream = new DataInputStream(fStream)) {
-            
+        try (ZipFile zipFile = new ZipFile(cacheFile);
+                InputStream entryInputStream = zipFile.getInputStream(zipFile.getEntry("latest"));
+                DataInputStream dStream = new DataInputStream(entryInputStream)) {
+
             while (dStream.available() > 0) {
-                final String locationKey = dStream.readUTF();
+                final String locationKey = StringUtils.base64Decode(dStream.readUTF());
                 final Instant born = Instant.ofEpochMilli(dStream.readLong());
                 final long dl = dStream.readLong();
                 final Instant deadline = dl == 0 ? null : Instant.ofEpochMilli(dl);
                 final int count = dStream.readInt();
                 final Set<Location> valueSet = new HashSet<>();
                 for (int i = 0; i < count; i++) {
-                    valueSet.add(YamlUtils.deserialize(dStream.readUTF(), Location.class));
+                    final String readValue = StringUtils.base64Decode(dStream.readUTF());
+                    valueSet.add(YamlUtils.deserialize(readValue, Location.class));
                 }
                 final Location key = YamlUtils.deserialize(locationKey, Location.class);
                 cacheMap.put(key, new LocationCell(born, deadline, valueSet));
