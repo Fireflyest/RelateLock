@@ -20,22 +20,17 @@ public class ChestRelate extends Relate {
 
     @Override
     public void traceRelateBlocks() {
-        if (attachBlock.getBlockData() instanceof Chest chest) {
+        if (attachBlock.getBlockData() instanceof Chest) {
             // 自己
             Print.RELATE_LOCK.debug("ChestRelate.traceRelateBlocks() -> chest");
             subRelate.add(new ContainerRelate(null, attachBlock));
+        }
 
-            // 另一半
-            final Block anotherChest = switch (chest.getType()) {
-                case LEFT -> attachBlock.getRelative(BlockUtils.rightFace(chest.getFacing()));
-                case RIGHT -> attachBlock.getRelative(BlockUtils.leftFace(chest.getFacing()));
-                case SINGLE -> null;
-                default -> null;
-            };
-            if (anotherChest != null && anotherChest.getBlockData() instanceof Chest) {
-                Print.RELATE_LOCK.debug("ChestRelate.traceRelateBlocks() -> chest");
-                subRelate.add(new ContainerRelate(null, anotherChest));
-            }
+        // 另一半
+        final Block anotherChest = BlockUtils.anotherChest(attachBlock);
+        if (anotherChest != null && anotherChest.getBlockData() instanceof Chest) {
+            Print.RELATE_LOCK.debug("ChestRelate.traceRelateBlocks() -> chest");
+            subRelate.add(new ContainerRelate(null, anotherChest));
         }
     }
     

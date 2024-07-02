@@ -8,14 +8,15 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.TileState;
 import org.bukkit.block.data.Bisected;
-import org.bukkit.block.data.Directional;
 import org.bukkit.block.data.type.Chest;
 import org.bukkit.block.data.type.Door;
+import org.bukkit.block.data.type.WallSign;
 import org.bukkit.plugin.java.JavaPlugin;
 import com.google.common.base.Objects;
 import io.fireflyest.relatelock.Print;
@@ -23,6 +24,7 @@ import io.fireflyest.relatelock.bean.Lock;
 import io.fireflyest.relatelock.cache.LocationOrganism;
 import io.fireflyest.relatelock.cache.LockOrganism;
 import io.fireflyest.relatelock.core.api.Locksmith;
+import io.fireflyest.relatelock.util.BlockUtils;
 
 /**
  * 锁匠实现类
@@ -76,8 +78,10 @@ public class LocksmithImpl implements Locksmith {
     @Override
     public boolean lock(@Nonnull Block signBlock, @Nonnull Lock lock) {
         // 获取被贴方块
-        final Directional directional = ((Directional) signBlock.getBlockData());
-        final Block attachBlock = signBlock.getRelative(directional.getFacing().getOppositeFace());
+        final Block attachBlock = BlockUtils.attachBlock(signBlock);
+        if (attachBlock == null) {
+            return false;
+        }
         
         // 获取关联
         final Relate relate;
@@ -207,10 +211,40 @@ public class LocksmithImpl implements Locksmith {
         return access;
     }
 
+
+    
+    @Override
+    public boolean place(@Nonnull Block block, @Nonnull String uid) {
+        boolean access = true;
+
+        if (block.getBlockData() instanceof Chest) {
+            access = this.placeChest(block, uid);
+        } else if (block.getBlockData() instanceof Door) {
+            access = this.placeDoor(block, uid);
+        } else if (block.getBlockData() instanceof WallSign) {
+            access = this.placeSign(block, uid);
+        }
+
+        return access;
+    }
+
     @Override
     public boolean isLocationLocked(@Nonnull Location location) {
         final Set<Location> lockedSet = locationMap.get(location.getChunk());
         return lockedSet != null && lockedSet.contains(location);
+    }
+
+    @Override
+    @Nullable
+    public Lock getLock(@Nonnull Location location) {
+        Lock lock = null;
+        if (locationOrg.scard(location) == 1) { // 关联方块
+            final Location signLocation = locationOrg.get(location);
+            lock = lockOrg.get(signLocation);
+        } else if (locationOrg.scard(location) > 1) { // 牌子
+            lock = lockOrg.get(location);
+        }
+        return lock;
     }
 
     /**
@@ -260,6 +294,77 @@ public class LocksmithImpl implements Locksmith {
                 Print.RELATE_LOCK.debug("LocksmithImpl.useLocation() -> door open:{}", isOpen);
             }
         }
+    }
+
+    /**
+     * 放置箱子
+     * 
+     * @param block 方块
+     * @param uid 玩家uuid
+     * @return 是否可放置
+     */
+    private boolean placeChest(@Nonnull Block block, @Nonnull String uid) {
+        boolean access = true;
+        final Block anotherChest = BlockUtils.anotherChest(block);
+        if (anotherChest != null && anotherChest.getBlockData() instanceof Chest
+                                 && this.isLocationLocked(anotherChest.getLocation())) {
+            final Location signLocation = locationOrg.get(anotherChest.getLocation());
+            final Lock lock = lockOrg.get(signLocation);
+            access = Objects.equal(lock.getOwner(), uid);
+            if (access) {
+                Print.RELATE_LOCK.debug("LocksmithImpl.place() -> chest");
+                this.lockLocation(block.getLocation(), signLocation);
+            }
+        }
+        return access;
+    }
+
+    /**
+     * 放置门
+     * 
+     * @param block 方块
+     * @param uid 玩家uuid
+     * @return 是否可放置
+     */
+    private boolean placeDoor(@Nonnull Block block, @Nonnull String uid) {
+        boolean access = true;
+        final Block anotherDoor = BlockUtils.anotherDoor(block);
+        if (anotherDoor != null && anotherDoor.getBlockData() instanceof Door
+                                && this.isLocationLocked(anotherDoor.getLocation())) {
+            final Location signLocation = locationOrg.get(anotherDoor.getLocation());
+            final Lock lock = lockOrg.get(signLocation);
+            access = Objects.equal(lock.getOwner(), uid);
+            if (access) {
+                Print.RELATE_LOCK.debug("LocksmithImpl.place() -> door");
+                final BisectedRelate relate = new BisectedRelate(null, block);
+                for (Block relateBlock : relate.getRelateBlocks()) {
+                    this.lockLocation(relateBlock.getLocation(), signLocation);
+                }
+            }
+        }
+        return access;
+    }
+
+    /**
+     * 放置牌子
+     * 
+     * @param block 方块
+     * @param uid 玩家uuid
+     * @return 是否可放置
+     */
+    private boolean placeSign(@Nonnull Block block, @Nonnull String uid) {
+        boolean access = true;
+        final Block attachBlock = BlockUtils.attachBlock(block);
+        if (attachBlock != null && this.isLocationLocked(attachBlock.getLocation())) {
+            final Location signLocation = locationOrg.get(attachBlock.getLocation());
+            final Lock lock = lockOrg.get(signLocation);
+            access = Objects.equal(lock.getOwner(), uid);
+            if (access) {
+                Print.RELATE_LOCK.debug("LocksmithImpl.place() -> sign");
+                this.lockLocation(block.getLocation(), signLocation);
+            }
+        }
+        return access;
     }
 
 }

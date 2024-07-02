@@ -1,6 +1,7 @@
 package io.fireflyest.relatelock.core.api;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import io.fireflyest.relatelock.bean.Lock;
@@ -50,10 +51,27 @@ public interface Locksmith {
     boolean destroy(@Nonnull Location location, @Nonnull String uid, @Nonnull String name);
 
     /**
+     * 放置方块
+     * 
+     * @param block 方块
+     * @param uid 玩家uuid
+     * @return 是否可放置
+     */
+    boolean place(@Nonnull Block block,  @Nonnull String uid);
+
+    /**
      * 获取某位置的方块是否被上锁
      * @param location 位置
      * @return 是否上锁
      */
     boolean isLocationLocked(@Nonnull Location location);
+
+    /**
+     * 获取某位置上方块的锁
+     * @param location 位置
+     * @return 锁
+     */
+    @Nullable
+    Lock getLock(@Nonnull Location location);
 
 }

@@ -9,6 +9,7 @@ import org.bukkit.Location;
 import org.bukkit.util.StringUtil;
 import org.junit.Test;
 
+import io.fireflyest.relatelock.util.StringUtils;
 import io.fireflyest.relatelock.util.YamlUtils;
 
 public class RelateLockTest {
@@ -33,6 +34,9 @@ public class RelateLockTest {
         System.out.println(encodeToString);
         String string = new String(Base64.getDecoder().decode(encodeToString));
         System.out.println(string);
+
+        System.out.println(StringUtils.toJson(Integer.valueOf(10)));
+        System.out.println(StringUtils.toJson(10));
     }
 
 }
