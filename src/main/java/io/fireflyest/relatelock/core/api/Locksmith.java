@@ -72,7 +72,7 @@ public interface Locksmith {
      * @param lines 行
      * @return 是否可修改
      */
-    boolean signChange(@Nonnull Location location, @Nonnull String uid, @Nonnull String[] lines);
+    String[] signChange(@Nonnull Location location, @Nonnull String uid, @Nonnull String[] lines);
 
     /**
      * 获取某位置上方块的锁

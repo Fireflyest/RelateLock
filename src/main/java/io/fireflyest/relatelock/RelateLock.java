@@ -32,7 +32,7 @@ public final class RelateLock extends JavaPlugin {
         Print.RELATE_LOCK.info("Loading config.");
         final FileConfiguration configFile = YamlUtils.getConfig(this);
         final Config config = new Config(configFile.getBoolean("Debug"), 
-                                         configFile.getString("LockString"),
+                                         configFile.getString("LockSymbol"),
                                          configFile.getString("ShareSymbol"),
                                          configFile.getString("ManagerSymbol"));
         

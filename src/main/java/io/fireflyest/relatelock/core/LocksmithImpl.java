@@ -7,10 +7,13 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Dropper;
@@ -81,7 +84,7 @@ public class LocksmithImpl implements Locksmith {
     public boolean lock(@Nonnull Block signBlock, @Nonnull Lock lock) {
         // 获取被贴方块
         final Block attachBlock = BlockUtils.blockAttach(signBlock);
-        if (attachBlock == null) {
+        if (attachBlock == null || !(signBlock.getBlockData() instanceof WallSign)) {
             return false;
         }
         
@@ -154,7 +157,9 @@ public class LocksmithImpl implements Locksmith {
     @Override
     public boolean use(@Nonnull Location location, @Nonnull String uid, @Nonnull String name) {
         boolean access = true;
-        if (this.isLocationLocked(location) && locationOrg.scard(location) == 1) {
+        if (location.getBlock().getBlockData() instanceof WallSign) { // 牌子
+
+        } else if (locationOrg.scard(location) == 1) { // 关联方块
             // 获取锁
             final Location signLocation = locationOrg.get(location);
             final Lock lock = lockOrg.get(signLocation);
@@ -239,12 +244,24 @@ public class LocksmithImpl implements Locksmith {
     }
 
     @Override
-    public boolean signChange(@Nonnull Location location, 
-                              @Nonnull String uid, 
-                              @Nonnull String[] lines) {
-        // TODO: 
+    public String[] signChange(@Nonnull Location location, 
+                               @Nonnull String uid, 
+                               @Nonnull String[] lines) {
         
-        return false;
+        int index = 0;
+        if (locationOrg.scard(location) == 1) { // 关联方块
+            final Location signLocation = locationOrg.get(location);
+            final Lock lock = lockOrg.get(signLocation);
+            for (int i = 0; i < lines.length; i++) {
+                lines[i] = this.lineUpdate(lock, lines[i]);
+            }
+        } else if (locationOrg.scard(location) > 1) { // 牌子
+            final Lock lock = lockOrg.get(location);
+            lines[index++] = "🔒 §l" + this.getPlayerName(lock.getOwner());
+            
+        }
+
+        return lines;
     }
 
     @Override
@@ -400,6 +417,28 @@ public class LocksmithImpl implements Locksmith {
             }
         }
         return access;
+    }
+
+    /**
+     * 牌子内容更新
+     * @param lock 锁
+     * @param line 行
+     * @return 更新后的行
+     */
+    private String lineUpdate(@Nonnull Lock lock, @Nonnull String line) {
+        String newLine = line;
+
+        return line;
+    }
+
+    /**
+     * 根据玩家UUID获取玩家名称
+     * @param uid 玩家UUID
+     * @return 玩家名称
+     */
+    private String getPlayerName(String uid) {
+        final OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(UUID.fromString(uid));
+        return offlinePlayer.getName();
     }
 
 }

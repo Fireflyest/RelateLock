@@ -60,23 +60,23 @@ public class LockEventListener implements Listener {
         final Block block = event.getBlock();
         final String uid = player.getUniqueId().toString();
 
-        if (locksmith.isLocationLocked(block.getLocation())) {
-            // 上锁牌子禁止修改
-            final boolean result = locksmith.signChange(block.getLocation(), uid, event.getLines());
-            if (result) {
-                
-            } else {
-                event.setCancelled(true);
-            }
-        } else if (config.lockString().equals(lines[0])) {
-            // 上锁
+        // 上锁
+        if (config.lockString().equals(lines[0])) {
             final Lock lock = new Lock(uid, Instant.now().toEpochMilli(), "normal", null);
             final boolean result = locksmith.lock(event.getBlock(), lock);
             if (result) {
-                event.setLine(0, "🔒 §l" + player.getName());
                 player.playSound(player, Sound.BLOCK_IRON_DOOR_CLOSE, 1, 1);
                 player.spigot().sendMessage(ChatMessageType.ACTION_BAR, 
                                             new ComponentBuilder("已上锁").create());
+            }
+        }
+
+        // 更新牌子文本
+        if (locksmith.isLocationLocked(block.getLocation())) {
+            // 上锁牌子修改
+            final String[] newLines = locksmith.signChange(block.getLocation(), uid, lines);
+            for (int i = 0; i < 4; i++) {
+                event.setLine(i, newLines[i]);
             }
         }
     }

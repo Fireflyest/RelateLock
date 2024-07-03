@@ -1,20 +1,7 @@
 # v${version}
-
-int: 1
-long: 100L
-double: 0.5
-colora: #FFFFFF
-boolean: true
-aaa: "aaaa"
-aaac: 
-  nnn: "nnn"
-  mmm: "mmm"
-bbb: 
-  - "aaa"
-  - "bbb"
-
 Debug: false
 
-LockString: "lock"
-ShareSymbol: "+"
-ManagerSymbol: "@"
+LockSymbol: "lock" # 第一行填这个上锁
+ShareSymbol: "+" # 添加共享
+ManagerSymbol: "@" # 添加管理共享
+RemoveSymbol: "-" # 除名
