@@ -1,3 +1,5 @@
+# v${version}
+
 int: 1
 long: 100L
 double: 0.5
@@ -11,5 +13,8 @@ bbb:
   - "aaa"
   - "bbb"
 
-LockString: lock
-ShareString: lock
+Debug: false
+
+LockString: "lock"
+ShareSymbol: "+"
+ManagerSymbol: "@"

@@ -12,6 +12,8 @@ import javax.annotation.Nullable;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.Dropper;
 import org.bukkit.block.TileState;
 import org.bukkit.block.data.Bisected;
 import org.bukkit.block.data.type.Chest;
@@ -78,7 +80,7 @@ public class LocksmithImpl implements Locksmith {
     @Override
     public boolean lock(@Nonnull Block signBlock, @Nonnull Lock lock) {
         // 获取被贴方块
-        final Block attachBlock = BlockUtils.attachBlock(signBlock);
+        final Block attachBlock = BlockUtils.blockAttach(signBlock);
         if (attachBlock == null) {
             return false;
         }
@@ -223,6 +225,8 @@ public class LocksmithImpl implements Locksmith {
             access = this.placeDoor(block, uid);
         } else if (block.getBlockData() instanceof WallSign) {
             access = this.placeSign(block, uid);
+        } else if (block.getState() instanceof Dropper) {
+            access = this.placeDropper(block, uid);
         }
 
         return access;
@@ -232,6 +236,15 @@ public class LocksmithImpl implements Locksmith {
     public boolean isLocationLocked(@Nonnull Location location) {
         final Set<Location> lockedSet = locationMap.get(location.getChunk());
         return lockedSet != null && lockedSet.contains(location);
+    }
+
+    @Override
+    public boolean signChange(@Nonnull Location location, 
+                              @Nonnull String uid, 
+                              @Nonnull String[] lines) {
+        // TODO: 
+        
+        return false;
     }
 
     @Override
@@ -354,7 +367,29 @@ public class LocksmithImpl implements Locksmith {
      */
     private boolean placeSign(@Nonnull Block block, @Nonnull String uid) {
         boolean access = true;
-        final Block attachBlock = BlockUtils.attachBlock(block);
+        final Block attachBlock = BlockUtils.blockAttach(block);
+        if (attachBlock != null && this.isLocationLocked(attachBlock.getLocation())) {
+            final Location signLocation = locationOrg.get(attachBlock.getLocation());
+            final Lock lock = lockOrg.get(signLocation);
+            access = Objects.equal(lock.getOwner(), uid);
+            if (access) {
+                Print.RELATE_LOCK.debug("LocksmithImpl.place() -> sign");
+                this.lockLocation(block.getLocation(), signLocation);
+            }
+        }
+        return access;
+    }
+
+    /**
+     * 放置漏斗
+     * 
+     * @param block 方块
+     * @param uid 玩家uuid
+     * @return 是否可放置
+     */
+    private boolean placeDropper(@Nonnull Block block, @Nonnull String uid) {
+        boolean access = true;
+        final Block attachBlock = block.getRelative(BlockFace.UP);
         if (attachBlock != null && this.isLocationLocked(attachBlock.getLocation())) {
             final Location signLocation = locationOrg.get(attachBlock.getLocation());
             final Lock lock = lockOrg.get(signLocation);

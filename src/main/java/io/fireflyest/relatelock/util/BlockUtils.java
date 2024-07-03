@@ -94,7 +94,7 @@ public final class BlockUtils {
      * @return 附着方块
      */
     @Nullable
-    public static Block attachBlock(@Nonnull Block block) {
+    public static Block blockAttach(@Nonnull Block block) {
         Block attach = null;
         if (block.getBlockData() instanceof Directional directional) {
             attach = block.getRelative(directional.getFacing().getOppositeFace());

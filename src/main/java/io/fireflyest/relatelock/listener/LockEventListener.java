@@ -10,6 +10,7 @@ import org.bukkit.block.data.type.Door;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.Event.Result;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockExplodeEvent;
@@ -57,12 +58,18 @@ public class LockEventListener implements Listener {
         final Player player = event.getPlayer();
         final String[] lines = event.getLines();
         final Block block = event.getBlock();
+        final String uid = player.getUniqueId().toString();
+
         if (locksmith.isLocationLocked(block.getLocation())) {
             // 上锁牌子禁止修改
-            event.setCancelled(true);
+            final boolean result = locksmith.signChange(block.getLocation(), uid, event.getLines());
+            if (result) {
+                
+            } else {
+                event.setCancelled(true);
+            }
         } else if (config.lockString().equals(lines[0])) {
             // 上锁
-            final String uid = player.getUniqueId().toString();
             final Lock lock = new Lock(uid, Instant.now().toEpochMilli(), "normal", null);
             final boolean result = locksmith.lock(event.getBlock(), lock);
             if (result) {
@@ -87,11 +94,14 @@ public class LockEventListener implements Listener {
         }
 
         if (block.getState() instanceof TileState || block.getBlockData() instanceof Door) {
+            // 防止操作的时候使用手上物品
+            event.setUseItemInHand(Result.DENY);
+            // 冷却防止重复点击
             if (lockOrganism.exist(block.getLocation())) {
                 return;
             }
-            lockOrganism.setex(block.getLocation(), 2, cooldownLock);
-
+            lockOrganism.setex(block.getLocation(), 1, cooldownLock);
+            // 权限判断
             final Player player = event.getPlayer();
             final String uid = player.getUniqueId().toString();
             final boolean result = locksmith.use(block.getLocation(), uid, player.getName());

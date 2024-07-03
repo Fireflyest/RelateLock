@@ -67,6 +67,14 @@ public interface Locksmith {
     boolean isLocationLocked(@Nonnull Location location);
 
     /**
+     * 牌子修改
+     * @param location 位置
+     * @param lines 行
+     * @return 是否可修改
+     */
+    boolean signChange(@Nonnull Location location, @Nonnull String uid, @Nonnull String[] lines);
+
+    /**
      * 获取某位置上方块的锁
      * @param location 位置
      * @return 锁

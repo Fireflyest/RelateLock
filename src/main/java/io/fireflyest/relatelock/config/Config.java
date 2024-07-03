@@ -7,5 +7,7 @@ package io.fireflyest.relatelock.config;
  * @since 1.0 
  */
 public record Config(
+    boolean debug, 
     String lockString, 
-    String shareString) {}
+    String shareSymbol, 
+    String managerSymbol) {}

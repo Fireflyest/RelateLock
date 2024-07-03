@@ -69,8 +69,4 @@ public enum Print {
         this.debug = true;
     }
 
-    public void offDebug() {
-        this.debug = false;
-    }
-
 }

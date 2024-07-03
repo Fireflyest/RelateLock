@@ -29,12 +29,17 @@ public final class RelateLock extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        Print.RELATE_LOCK.onDebug();
-
         Print.RELATE_LOCK.info("Loading config.");
         final FileConfiguration configFile = YamlUtils.getConfig(this);
-        final Config config = new Config(configFile.getString("LockString"), 
-                                         configFile.getString("ShareString"));
+        final Config config = new Config(configFile.getBoolean("Debug"), 
+                                         configFile.getString("LockString"),
+                                         configFile.getString("ShareSymbol"),
+                                         configFile.getString("ManagerSymbol"));
+        
+        if (config.debug()) {
+            Print.RELATE_LOCK.onDebug();
+            Print.RELATE_LOCK.debug("Enabled debug, more info will be printed!");
+        }
 
         // 锁服务
         this.locksmith = new LocksmithImpl();
