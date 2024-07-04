@@ -10,4 +10,5 @@ public record Config(
     boolean debug, 
     String lockString, 
     String shareSymbol, 
-    String managerSymbol) {}
+    String managerSymbol,
+    String removeSymbol) {}

@@ -1,7 +1,6 @@
 package io.fireflyest.relatelock.listener;
 
 import java.time.Instant;
-import java.util.Iterator;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
@@ -182,13 +181,14 @@ public class LockEventListener implements Listener {
      */
     @EventHandler
     public void onBlockExplode(BlockExplodeEvent event) {
-        final Iterator<Block> iterator = event.blockList().iterator();
-        while (iterator.hasNext()) {
-            final Block block = iterator.next();
-            if (locksmith.isLocationLocked(block.getLocation())) {
-                iterator.remove();
-            }
-        }
+        // final Iterator<Block> iterator = event.blockList().iterator();
+        // while (iterator.hasNext()) {
+        //     final Block block = iterator.next();
+        //     if (locksmith.isLocationLocked(block.getLocation())) {
+        //         iterator.remove();
+        //     }
+        // }
+        event.blockList().removeIf(block -> locksmith.isLocationLocked(block.getLocation()));
     }
 
     /**
@@ -198,13 +198,14 @@ public class LockEventListener implements Listener {
      */
     @EventHandler
     public void onEntityExplode(EntityExplodeEvent event) {
-        final Iterator<Block> iterator = event.blockList().iterator();
-        while (iterator.hasNext()) {
-            final Block block = iterator.next();
-            if (locksmith.isLocationLocked(block.getLocation())) {
-                iterator.remove();
-            }
-        }
+        // final Iterator<Block> iterator = event.blockList().iterator();
+        // while (iterator.hasNext()) {
+        //     final Block block = iterator.next();
+        //     if (locksmith.isLocationLocked(block.getLocation())) {
+        //         iterator.remove();
+        //     }
+        // }
+        event.blockList().removeIf(block -> locksmith.isLocationLocked(block.getLocation()));
     }
 
 }

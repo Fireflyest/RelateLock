@@ -20,7 +20,7 @@ import javax.annotation.Nonnull;
 import org.bukkit.Location;
 import org.bukkit.plugin.Plugin;
 import io.fireflyest.relatelock.cache.api.Organism;
-import io.fireflyest.relatelock.util.StringUtils;
+import io.fireflyest.relatelock.util.StrUtils;
 import io.fireflyest.relatelock.util.YamlUtils;
 
 /**
@@ -202,14 +202,14 @@ public class LocationOrganism implements Organism<Location, Location> {
                     continue;
                 }
                 // 数据信息拼接
-                final String key = StringUtils.base64Encode(YamlUtils.serialize(entry.getKey()));
+                final String key = StrUtils.base64Encode(YamlUtils.serialize(entry.getKey()));
                 dStream.writeUTF(key); // key
                 dStream.writeLong(cacheCell.getBorn().toEpochMilli()); // 起始时间
                 dStream.writeLong(deadline == null ? 0 : deadline.toEpochMilli()); // 失效时间
                 dStream.writeInt(valueSet.size()); // 数据数量
                 // 数据集拼接
                 for (Location value : valueSet) {
-                    dStream.writeUTF(StringUtils.base64Encode(YamlUtils.serialize(value))); // 数据
+                    dStream.writeUTF(StrUtils.base64Encode(YamlUtils.serialize(value))); // 数据
                 }
             }
             dStream.flush();
@@ -230,14 +230,14 @@ public class LocationOrganism implements Organism<Location, Location> {
                 DataInputStream dStream = new DataInputStream(entryInputStream)) {
 
             while (dStream.available() > 0) {
-                final String locationKey = StringUtils.base64Decode(dStream.readUTF());
+                final String locationKey = StrUtils.base64Decode(dStream.readUTF());
                 final Instant born = Instant.ofEpochMilli(dStream.readLong());
                 final long dl = dStream.readLong();
                 final Instant deadline = dl == 0 ? null : Instant.ofEpochMilli(dl);
                 final int count = dStream.readInt();
                 final Set<Location> valueSet = new HashSet<>();
                 for (int i = 0; i < count; i++) {
-                    final String readValue = StringUtils.base64Decode(dStream.readUTF());
+                    final String readValue = StrUtils.base64Decode(dStream.readUTF());
                     valueSet.add(YamlUtils.deserialize(readValue, Location.class));
                 }
                 final Location key = YamlUtils.deserialize(locationKey, Location.class);

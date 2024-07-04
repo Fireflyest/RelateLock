@@ -21,7 +21,7 @@ import org.bukkit.Location;
 import org.bukkit.plugin.Plugin;
 import io.fireflyest.relatelock.bean.Lock;
 import io.fireflyest.relatelock.cache.api.Organism;
-import io.fireflyest.relatelock.util.StringUtils;
+import io.fireflyest.relatelock.util.StrUtils;
 import io.fireflyest.relatelock.util.YamlUtils;
 
 /**
@@ -208,7 +208,7 @@ public class LockOrganism implements Organism<Location, Lock> {
                 dStream.writeInt(valueSet.size()); // 数据数量
                 // 数据集拼接
                 for (Lock value : valueSet) {
-                    dStream.writeUTF(StringUtils.toJson(value)); // 数据
+                    dStream.writeUTF(StrUtils.toJson(value)); // 数据
                 }
             }
             dStream.flush();
@@ -236,7 +236,7 @@ public class LockOrganism implements Organism<Location, Lock> {
                 final int count = dStream.readInt();
                 final Set<Lock> valueSet = new HashSet<>();
                 for (int i = 0; i < count; i++) {
-                    valueSet.add(StringUtils.jsonToObj(dStream.readUTF(), Lock.class));
+                    valueSet.add(StrUtils.jsonToObj(dStream.readUTF(), Lock.class));
                 }
                 final Location key = YamlUtils.deserialize(locationKey, Location.class);
                 cacheMap.put(key, new LockCell(born, deadline, valueSet));

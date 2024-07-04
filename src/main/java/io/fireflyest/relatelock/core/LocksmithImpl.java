@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -22,12 +23,14 @@ import org.bukkit.block.data.Bisected;
 import org.bukkit.block.data.type.Chest;
 import org.bukkit.block.data.type.Door;
 import org.bukkit.block.data.type.WallSign;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import com.google.common.base.Objects;
 import io.fireflyest.relatelock.Print;
 import io.fireflyest.relatelock.bean.Lock;
 import io.fireflyest.relatelock.cache.LocationOrganism;
 import io.fireflyest.relatelock.cache.LockOrganism;
+import io.fireflyest.relatelock.config.Config;
 import io.fireflyest.relatelock.core.api.Locksmith;
 import io.fireflyest.relatelock.util.BlockUtils;
 
@@ -37,6 +40,8 @@ import io.fireflyest.relatelock.util.BlockUtils;
  * @since 1.0
  */
 public class LocksmithImpl implements Locksmith {
+
+    private final Config config;
 
     /**
      * 所有上锁的位置
@@ -53,8 +58,8 @@ public class LocksmithImpl implements Locksmith {
      */
     private final LockOrganism lockOrg = new LockOrganism("lock");
 
-    public LocksmithImpl() {
-        //
+    public LocksmithImpl(@Nonnull Config config) {
+        this.config = config;
     }
 
     /**
@@ -248,7 +253,6 @@ public class LocksmithImpl implements Locksmith {
                                @Nonnull String uid, 
                                @Nonnull String[] lines) {
         
-        int index = 0;
         if (locationOrg.scard(location) == 1) { // 关联方块
             final Location signLocation = locationOrg.get(location);
             final Lock lock = lockOrg.get(signLocation);
@@ -257,8 +261,10 @@ public class LocksmithImpl implements Locksmith {
             }
         } else if (locationOrg.scard(location) > 1) { // 牌子
             final Lock lock = lockOrg.get(location);
-            lines[index++] = "🔒 §l" + this.getPlayerName(lock.getOwner());
-            
+            lines[0] = "🔒 §l" + this.getPlayerName(lock.getOwner());
+            lines[1] = this.lineUpdate(lock, lines[1]); 
+            lines[2] = this.lineUpdate(lock, lines[2]); 
+            lines[3] = this.lineUpdate(lock, lines[3]); 
         }
 
         return lines;
@@ -426,9 +432,35 @@ public class LocksmithImpl implements Locksmith {
      * @return 更新后的行
      */
     private String lineUpdate(@Nonnull Lock lock, @Nonnull String line) {
-        String newLine = line;
-
-        return line;
+        String newLine = "§c" + line;
+        final String[] entrys = StringUtils.split(line, ',');
+        for (String entry : entrys) {
+            final StringBuilder sb = new StringBuilder();
+            if (entry.startsWith(config.managerSymbol())) { // 管理
+                final String playerName = StringUtils.removeStart(entry, config.managerSymbol());
+                final String uid = this.getPlayerUid(playerName);
+                if (uid != null) {
+                    sb.append(",").append(playerName);
+                    lock.getManager().add(uid);
+                }
+            } else if (entry.startsWith(config.removeSymbol())) { // 移除
+                final String playerName = StringUtils.removeStart(entry, config.removeSymbol());
+                final String uid = this.getPlayerUid(playerName);
+                if (uid != null) {
+                    lock.getShare().remove(uid);
+                    lock.getManager().remove(uid);
+                }
+            } else { // 默认共享
+                final String playerName = StringUtils.removeStart(entry, config.shareSymbol());
+                final String uid = this.getPlayerUid(playerName);
+                if (uid != null) {
+                    sb.append(",").append("§8").append(playerName);
+                    lock.getShare().add(uid);
+                }
+            }
+            newLine = StringUtils.removeStart(sb.toString(), ",");
+        }
+        return newLine;
     }
 
     /**
@@ -439,6 +471,26 @@ public class LocksmithImpl implements Locksmith {
     private String getPlayerName(String uid) {
         final OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(UUID.fromString(uid));
         return offlinePlayer.getName();
+    }
+
+    /**
+     * 获取玩家UUID
+     * @param playerName 玩家名称
+     * @return 玩家UUID
+     */
+    @Nullable
+    private String getPlayerUid(String playerName) {
+        final Player player = Bukkit.getPlayerExact(playerName);
+        // 如果玩家离线
+        if (player == null) {
+            for (OfflinePlayer offlinePlayer : Bukkit.getOfflinePlayers()) {
+                if (playerName.equals(offlinePlayer.getName())) {
+                    return offlinePlayer.getUniqueId().toString();
+                }
+            }
+            return null;
+        }
+        return player.getUniqueId().toString();
     }
 
 }

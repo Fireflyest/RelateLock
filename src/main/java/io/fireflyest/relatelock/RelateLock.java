@@ -34,7 +34,8 @@ public final class RelateLock extends JavaPlugin {
         final Config config = new Config(configFile.getBoolean("Debug"), 
                                          configFile.getString("LockSymbol"),
                                          configFile.getString("ShareSymbol"),
-                                         configFile.getString("ManagerSymbol"));
+                                         configFile.getString("ManagerSymbol"),
+                                         configFile.getString("RemoveSymbol"));
         
         if (config.debug()) {
             Print.RELATE_LOCK.onDebug();
@@ -42,7 +43,7 @@ public final class RelateLock extends JavaPlugin {
         }
 
         // 锁服务
-        this.locksmith = new LocksmithImpl();
+        this.locksmith = new LocksmithImpl(config);
         Print.RELATE_LOCK.info("Loading lock's data from cache file.");
         this.locksmith.load(this);
         this.getServer().getServicesManager()
