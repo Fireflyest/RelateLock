@@ -2,6 +2,7 @@ package io.fireflyest.relatelock.core;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -42,6 +43,7 @@ import io.fireflyest.relatelock.util.BlockUtils;
 public class LocksmithImpl implements Locksmith {
 
     private final Config config;
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     /**
      * 所有上锁的位置
@@ -504,6 +506,27 @@ public class LocksmithImpl implements Locksmith {
             return null;
         }
         return player.getUniqueId().toString();
+    }
+
+    /**
+     * 添加锁操作日志
+     * 
+     * @param lock 锁
+     * @param uid 玩家UUID
+     * @param doWhat 玩家操作
+     * @param access 是否允许
+     */
+    private void addLog(@Nonnull Lock lock, String uid, String doWhat, boolean access) {
+
+    }
+
+    /**
+     * 整理日志，删除较久的日志
+     * 
+     * @param lock 锁
+     */
+    private void trimLogs(@Nonnull Lock lock) {
+
     }
 
 }
