@@ -2,6 +2,6 @@
 Debug: false
 
 LockSymbol: "lock" # 第一行填这个上锁
-ShareSymbol: "+" # 添加共享
-ManagerSymbol: "@" # 添加管理共享
+ShareSymbol: "#" # 添加共享
+ManagerSymbol: "$" # 添加管理共享
 RemoveSymbol: "-" # 除名

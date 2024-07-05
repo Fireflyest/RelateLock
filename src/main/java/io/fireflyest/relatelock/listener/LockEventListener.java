@@ -102,8 +102,7 @@ public class LockEventListener implements Listener {
             lockOrganism.setex(block.getLocation(), 1, cooldownLock);
             // 权限判断
             final Player player = event.getPlayer();
-            final String uid = player.getUniqueId().toString();
-            final boolean result = locksmith.use(block.getLocation(), uid, player.getName());
+            final boolean result = locksmith.use(block.getLocation(), player);
             if (result) {
                 event.getPlayer().spigot()
                      .sendMessage(ChatMessageType.ACTION_BAR, new ComponentBuilder("允许使用")
@@ -181,13 +180,6 @@ public class LockEventListener implements Listener {
      */
     @EventHandler
     public void onBlockExplode(BlockExplodeEvent event) {
-        // final Iterator<Block> iterator = event.blockList().iterator();
-        // while (iterator.hasNext()) {
-        //     final Block block = iterator.next();
-        //     if (locksmith.isLocationLocked(block.getLocation())) {
-        //         iterator.remove();
-        //     }
-        // }
         event.blockList().removeIf(block -> locksmith.isLocationLocked(block.getLocation()));
     }
 
@@ -198,13 +190,6 @@ public class LockEventListener implements Listener {
      */
     @EventHandler
     public void onEntityExplode(EntityExplodeEvent event) {
-        // final Iterator<Block> iterator = event.blockList().iterator();
-        // while (iterator.hasNext()) {
-        //     final Block block = iterator.next();
-        //     if (locksmith.isLocationLocked(block.getLocation())) {
-        //         iterator.remove();
-        //     }
-        // }
         event.blockList().removeIf(block -> locksmith.isLocationLocked(block.getLocation()));
     }
 

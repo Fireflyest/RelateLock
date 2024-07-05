@@ -4,6 +4,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
+
 import io.fireflyest.relatelock.bean.Lock;
 
 /**
@@ -34,11 +36,10 @@ public interface Locksmith {
      * 使用
      * 
      * @param location 方块位置
-     * @param uid 玩家uuid
-     * @param name 玩家名称
+     * @param player 玩家
      * @return 是否可用
      */
-    boolean use(@Nonnull Location location, @Nonnull String uid, @Nonnull String name);
+    boolean use(@Nonnull Location location, @Nonnull Player player);
 
     /**
      * 破坏方块
