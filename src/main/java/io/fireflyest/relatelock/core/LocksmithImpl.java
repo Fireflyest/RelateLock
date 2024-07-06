@@ -176,7 +176,7 @@ public class LocksmithImpl implements Locksmith {
             player.sendMessage("上锁方块：" + locationOrg.scard(location));
             player.sendMessage("管理：" + lock.getManager().toString());
             player.sendMessage("使用：" + lock.getShare().toString());
-            player.sendMessage("记录：" + lock.getLog().toString());
+            player.sendMessage("记录：" + lock.getLog().size());
         } else if (locationOrg.scard(location) == 1) { // 关联方块
             // 获取锁
             final Location signLocation = locationOrg.get(location);
@@ -184,15 +184,18 @@ public class LocksmithImpl implements Locksmith {
             if (lock == null) {
                 return access;
             }
-            // 判断是否有权限
-            access = Objects.equal(lock.getOwner(), uid)
-                  || lock.getShare().contains(uid)
-                  || lock.getManager().contains(uid);
-            if (access) {
-                this.useLocation(location);
+            if (location.getBlock().getBlockData() instanceof WallSign) { // 牌子
+                access = Objects.equal(lock.getOwner(), uid);
+            } else { // 其他方块
+                access = Objects.equal(lock.getOwner(), uid)
+                                    || lock.getShare().contains(uid)
+                                    || lock.getManager().contains(uid);
+                if (access) {
+                    this.useLocation(location);
+                }
             }
             // 日志
-            lock.getLog().add(LocalDateTime.now().toString() + " " + name + " use:" + access);
+            this.addLog(lock, name, "use", access);
         }
         return access;
     }
@@ -210,7 +213,7 @@ public class LocksmithImpl implements Locksmith {
             // 多关联的情况下需要先解锁再破坏
             if (locationOrg.scard(signLocation) > 2) {
                 access = false;
-                lock.getLog().add(LocalDate.now().toString() + " " + name + " destroy:" + access);
+                this.addLog(lock, name, "destroy", access);
                 return access;
             }
             // 判断是否有权限
@@ -221,7 +224,7 @@ public class LocksmithImpl implements Locksmith {
                 this.unlockLocation(signLocation, signLocation);
             }   
             // 日志
-            lock.getLog().add(LocalDate.now().toString() + " " + name + " destroy:" + access);
+            this.addLog(lock, name, "destroy", access);
         } else if (locationOrg.scard(location) > 1) { // 主牌子
             // 获取锁
             final Lock lock = lockOrg.get(location);
@@ -447,35 +450,55 @@ public class LocksmithImpl implements Locksmith {
      * @return 更新后的行
      */
     private String lineUpdate(@Nonnull Lock lock, @Nonnull String line) {
+        // 注释
+        if (StringUtils.contains(line, '[') && StringUtils.contains(line, ']')) {
+            return line;
+        }
+        // 添加玩家
         final String[] entrys = StringUtils.split(line, ',');
         final StringBuilder sb = new StringBuilder();
         for (String entry : entrys) {
-            if (entry.startsWith(config.managerSymbol())) { // 管理
-                final String playerName = StringUtils.removeStart(entry, config.managerSymbol());
-                final String uid = this.getPlayerUid(playerName);
-                if (uid != null) {
-                    sb.append(",").append(config.managerSymbol())
-                      .append("§r").append(playerName);
-                    lock.getManager().add(uid);
-                }
-            } else if (entry.startsWith(config.removeSymbol())) { // 移除
-                final String playerName = StringUtils.removeStart(entry, config.removeSymbol());
-                final String uid = this.getPlayerUid(playerName);
-                if (uid != null) {
-                    lock.getShare().remove(uid);
-                    lock.getManager().remove(uid);
-                }
-            } else { // 默认共享
-                final String playerName = StringUtils.removeStart(entry, config.shareSymbol());
-                final String uid = this.getPlayerUid(playerName);
-                if (uid != null) {
-                    sb.append(",").append(config.shareSymbol())
-                      .append("§r").append(playerName);
-                    lock.getShare().add(uid);
-                }
-            }
+            sb.append(this.updateShare(lock, entry));
         }
         return StringUtils.removeStart(sb.toString(), ",");
+    }
+
+    /**
+     * 更新共享
+     * 
+     * @param lock 锁
+     * @param entry 输入的玩家名称
+     * @return 更新的玩家名称
+     */
+    private StringBuilder updateShare(@Nonnull Lock lock, @Nonnull String entry) {
+        final StringBuilder sb = new StringBuilder();
+        String playerName = null;
+        String uid = null;
+        if (entry.startsWith(config.managerSymbol())) { // 管理
+            playerName = StringUtils.removeStart(entry, config.managerSymbol());
+            uid = this.getPlayerUid(playerName);
+            if (uid != null) {
+                sb.append(",").append(config.managerSymbol())
+                  .append("§r").append(playerName);
+                lock.getManager().add(uid);
+            }
+        } else if (entry.startsWith(config.removeSymbol())) { // 移除
+            playerName = StringUtils.removeStart(entry, config.removeSymbol());
+            uid = this.getPlayerUid(playerName);
+            if (uid != null) {
+                lock.getShare().remove(uid);
+                lock.getManager().remove(uid);
+            }
+        } else { // 默认共享
+            playerName = StringUtils.removeStart(entry, config.shareSymbol());
+            uid = this.getPlayerUid(playerName);
+            if (uid != null) {
+                sb.append(",").append(config.shareSymbol())
+                  .append("§r").append(playerName);
+                lock.getShare().add(uid);
+            }
+        }
+        return sb;
     }
 
     /**
@@ -516,8 +539,11 @@ public class LocksmithImpl implements Locksmith {
      * @param doWhat 玩家操作
      * @param access 是否允许
      */
-    private void addLog(@Nonnull Lock lock, String uid, String doWhat, boolean access) {
-
+    private void addLog(@Nonnull Lock lock, @Nonnull String who, String doWhat, boolean access) {
+        lock.getLog().add("[§7" + LocalDateTime.now().format(formatter) + "§r] " 
+                              + who 
+                              + (access ? " §a" : " §c")
+                              + doWhat + "§r");
     }
 
     /**
