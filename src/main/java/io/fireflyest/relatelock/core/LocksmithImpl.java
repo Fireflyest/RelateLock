@@ -34,6 +34,8 @@ import io.fireflyest.relatelock.cache.LockOrganism;
 import io.fireflyest.relatelock.config.Config;
 import io.fireflyest.relatelock.core.api.Locksmith;
 import io.fireflyest.relatelock.util.BlockUtils;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
 
 /**
  * 锁匠实现类
@@ -499,6 +501,18 @@ public class LocksmithImpl implements Locksmith {
             }
         }
         return sb;
+    }
+
+    private void listPlayers(@Nonnull Player player, @Nonnull Set<String> playerSet) {
+        final StringBuilder sb = new StringBuilder();
+        final TextComponent textComponent = new TextComponent();
+        //     .addExtra(this.getPlayerName(null))
+        for (String uid : playerSet) {
+            final String playerName = this.getPlayerName(uid);
+            final TextComponent textComponent2 = new TextComponent();
+            // textComponent.addExtra();
+        }
+        
     }
 
     /**
