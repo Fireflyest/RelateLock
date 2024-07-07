@@ -9,6 +9,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.java.JavaPlugin;
+import io.fireflyest.relatelock.command.args.Argument;
 
 /**
  * 简单指令
@@ -24,8 +25,15 @@ public abstract class SimpleCommand extends AbstractCommand
      * 
      * @param name 名称
      */
-    protected SimpleCommand(@Nonnull String name) {
+    protected SimpleCommand(@Nullable String name) {
         super(name);
+    }
+
+    /**
+     * 简单指令
+     */
+    protected SimpleCommand() {
+        this(null);
     }
 
     @Override
@@ -58,16 +66,29 @@ public abstract class SimpleCommand extends AbstractCommand
     }
 
     /**
+     * 添加变量
+     * @param arg 变量
+     * @return 本身
+     */
+    public SimpleCommand addArg(@Nonnull Argument arg) {
+        if (arguments.size() < MAX_ARGS) {
+            arguments.add(arg);
+        }
+        return this;
+    }
+
+    /**
      * 应用到插件
      * 
      * @param plugin 插件
      */
-    public void apply(@Nonnull JavaPlugin plugin) {
-        final PluginCommand command = plugin.getCommand(name);
+    public AbstractCommand apply(@Nonnull JavaPlugin plugin) {
+        final PluginCommand command = plugin.getCommand(this.getName());
         if (command != null) {
             command.setExecutor(this);
             command.setTabCompleter(this);
         }
+        return this;
     }
     
 }

@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.command.CommandSender;
 import io.fireflyest.relatelock.command.args.Argument;
 
@@ -16,12 +17,7 @@ import io.fireflyest.relatelock.command.args.Argument;
  */
 public abstract class AbstractCommand {
     
-    public static final int MAX_ARGS = 5;
-
-    /**
-     * 指令名称
-     */
-    protected String name;
+    protected static final int MAX_ARGS = 5;
 
     /**
      * 变量列表，最多设置五个变量
@@ -29,11 +25,16 @@ public abstract class AbstractCommand {
     protected List<Argument> arguments = new ArrayList<>(MAX_ARGS);
 
     /**
+     * 指令名称
+     */
+    private String name;
+
+    /**
      * 抽象指令
      * 
      * @param name 指令名称
      */
-    protected AbstractCommand(@Nonnull String name) {
+    protected AbstractCommand(@Nullable String name) {
         this.name = name;
     }
 
@@ -43,19 +44,17 @@ public abstract class AbstractCommand {
      * @return 指令名称
      */
     public String getName() {
+        if (name == null) {
+            name = StringUtils.removeEnd(this.getClass().getSimpleName().toLowerCase(), "command");
+        }
         return name;
     }
 
     /**
-     * 添加变量
-     * @param arg 变量
-     * @return 本身
+     * 获取参数列表
      */
-    public AbstractCommand addArg(@Nonnull Argument arg) {
-        if (arguments.size() < MAX_ARGS) {
-            arguments.add(arg);
-        }
-        return this;
+    public List<Argument> getArguments() {
+        return arguments;
     }
 
     /**

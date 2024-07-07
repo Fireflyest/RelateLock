@@ -2,3 +2,8 @@ name: RelateLock
 version: '${project.version}'
 main: io.fireflyest.relatelock.RelateLock
 api-version: '1.18'
+
+commands:
+  lock:
+    description: 主指令
+    usage: /lock

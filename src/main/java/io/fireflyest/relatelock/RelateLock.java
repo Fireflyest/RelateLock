@@ -3,6 +3,9 @@ package io.fireflyest.relatelock;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import io.fireflyest.relatelock.command.AbstractCommand;
+import io.fireflyest.relatelock.command.LockCommand;
 import io.fireflyest.relatelock.config.Config;
 import io.fireflyest.relatelock.core.LocksmithImpl;
 import io.fireflyest.relatelock.core.api.Locksmith;
@@ -48,6 +51,8 @@ public final class RelateLock extends JavaPlugin {
         this.locksmith.load(this);
         this.getServer().getServicesManager()
             .register(Locksmith.class, locksmith, this, ServicePriority.Normal);
+
+        new LockCommand(locksmith).apply(this);
 
         // 事件监听
         this.getServer().getPluginManager()
