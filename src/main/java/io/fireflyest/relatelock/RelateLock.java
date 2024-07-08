@@ -3,9 +3,9 @@ package io.fireflyest.relatelock;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
-
-import io.fireflyest.relatelock.command.AbstractCommand;
+import io.fireflyest.relatelock.command.LockBackupCommand;
 import io.fireflyest.relatelock.command.LockCommand;
+import io.fireflyest.relatelock.command.LockPwdCommand;
 import io.fireflyest.relatelock.config.Config;
 import io.fireflyest.relatelock.core.LocksmithImpl;
 import io.fireflyest.relatelock.core.api.Locksmith;
@@ -48,11 +48,14 @@ public final class RelateLock extends JavaPlugin {
         // 锁服务
         this.locksmith = new LocksmithImpl(config);
         Print.RELATE_LOCK.info("Loading lock's data from cache file.");
-        this.locksmith.load(this);
+        this.locksmith.load(this, null);
         this.getServer().getServicesManager()
             .register(Locksmith.class, locksmith, this, ServicePriority.Normal);
 
-        new LockCommand(locksmith).apply(this);
+        new LockCommand(locksmith)
+            .addSub(new LockPwdCommand(locksmith))
+            .addSub(new LockBackupCommand(locksmith).async())
+            .apply(this);
 
         // 事件监听
         this.getServer().getPluginManager()
@@ -62,7 +65,7 @@ public final class RelateLock extends JavaPlugin {
     @Override
     public void onDisable() {
         Print.RELATE_LOCK.info("Saving lock's data to cache file.");
-        this.locksmith.save(this);
+        this.locksmith.save(this, null);
         // close data service
         
     }

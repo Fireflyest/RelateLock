@@ -7,6 +7,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 import io.fireflyest.relatelock.command.args.Argument;
 
 /**
@@ -22,12 +24,22 @@ public abstract class AbstractCommand {
     /**
      * 变量列表，最多设置五个变量
      */
-    protected List<Argument> arguments = new ArrayList<>(MAX_ARGS);
+    private List<Argument> arguments = new ArrayList<>(MAX_ARGS);
 
     /**
      * 指令名称
      */
     private String name;
+
+    /**
+     * 是否异步执行
+     */
+    private boolean async;
+
+    /**
+     * 应用的插件
+     */
+    protected JavaPlugin plugin;
 
     /**
      * 抽象指令
@@ -36,6 +48,12 @@ public abstract class AbstractCommand {
      */
     protected AbstractCommand(@Nullable String name) {
         this.name = name;
+    }
+
+    /**
+     * 抽象指令，由类名决定名称
+     */
+    protected AbstractCommand() {
     }
 
     /**
@@ -51,10 +69,38 @@ public abstract class AbstractCommand {
     }
 
     /**
+     * 获取指令的执行方式
+     * 
+     * @return 是否异步执行
+     */
+    public boolean isAsync() {
+        return async;
+    }
+
+    /**
+     * 设置指令为异步执行
+     */
+    public AbstractCommand async() {
+        this.async = true;
+        return this;
+    }
+
+    /**
      * 获取参数列表
      */
     public List<Argument> getArguments() {
         return arguments;
+    }
+
+    /**
+     * 获取指令执行任务
+     * 
+     * @param sender 执行者
+     * @param args 参数
+     * @return 指令执行任务
+     */
+    protected CommandRunnable runnable(@Nonnull CommandSender sender, @Nonnull String[] args) {
+        return new CommandRunnable(sender, args);
     }
 
     /**
@@ -126,6 +172,61 @@ public abstract class AbstractCommand {
         }
         final boolean hasArg = arguments.size() > index;
         return hasArg ? arguments.get(index).tab(sender, arg) : Collections.emptyList();
+    }
+
+    /**
+     * 指令执行任务
+     * @author Fireflyest
+     * @since 1.0
+     */
+    protected class CommandRunnable extends BukkitRunnable {
+
+        private final CommandSender sender;
+        private final String[] args;
+
+        private boolean valid = false;
+
+        /**
+         * 构造可执行指令任务
+         * 
+         * @param sender 指令发送者
+         * @param args 参数
+         */
+        public CommandRunnable(@Nonnull CommandSender sender, @Nonnull String[] args) {
+            this.sender = sender;
+            this.args = args;
+        }
+
+        @Override
+        public void run() {
+            switch (args.length) {
+                case 0:
+                    valid = execute(sender);
+                    break;
+                case 1:
+                    valid = execute(sender, args[0]);
+                    break;
+                case 2:
+                    valid = execute(sender, args[0], args[1]);
+                    break;
+                case 3:
+                    valid = execute(sender, args[0], args[1], args[2]);
+                    break;
+                default:
+                    valid = execute(sender, args);
+                    break;
+            }
+        }
+
+        /**
+         * 指令运行的有效性
+         * 
+         * @return 是否有效
+         */
+        public boolean isValid() {
+            return valid;
+        }
+
     }
 
 }

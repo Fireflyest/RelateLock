@@ -1,6 +1,5 @@
 package io.fireflyest.relatelock.core;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -34,8 +33,6 @@ import io.fireflyest.relatelock.cache.LockOrganism;
 import io.fireflyest.relatelock.config.Config;
 import io.fireflyest.relatelock.core.api.Locksmith;
 import io.fireflyest.relatelock.util.BlockUtils;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.TextComponent;
 
 /**
  * 锁匠实现类
@@ -70,9 +67,12 @@ public class LocksmithImpl implements Locksmith {
      * 加载数据
      * @param plugin 插件
      */
-    public void load(JavaPlugin plugin) {
-        this.locationOrg.load(plugin);
-        this.lockOrg.load(plugin);
+    public void load(@Nonnull JavaPlugin plugin, @Nullable String entry) {
+        if (entry == null) {
+            entry = "latest";
+        }
+        this.locationOrg.load(plugin, entry);
+        this.lockOrg.load(plugin, entry);
         // 方块上锁
         for (Location location : this.locationOrg.keySet()) {
             final Chunk chunk = location.getChunk();
@@ -84,9 +84,12 @@ public class LocksmithImpl implements Locksmith {
      * 保存数据
      * @param plugin 插件
      */
-    public void save(JavaPlugin plugin) {
-        this.locationOrg.save(plugin);
-        this.lockOrg.save(plugin);
+    public void save(@Nonnull JavaPlugin plugin, @Nullable String entry) {
+        if (entry == null) {
+            entry = "latest";
+        }
+        this.locationOrg.save(plugin, entry);
+        this.lockOrg.save(plugin, entry);
     }
 
     @Override
@@ -169,16 +172,13 @@ public class LocksmithImpl implements Locksmith {
         final String name = player.getName();
 
         boolean access = true;
-        if (locationOrg.scard(location) > 1) { // 牌子
+        if (locationOrg.scard(location) > 1) { // 主牌子
             final Lock lock = lockOrg.get(location);
             if (lock == null) {
                 return access;
             }
-            player.sendMessage("🔒 §l" + this.getPlayerName(lock.getOwner()));
-            player.sendMessage("上锁方块：" + locationOrg.scard(location));
-            player.sendMessage("管理：" + lock.getManager().toString());
-            player.sendMessage("使用：" + lock.getShare().toString());
-            player.sendMessage("记录：" + lock.getLog().size());
+            access = Objects.equal(lock.getOwner(), uid);
+            this.addLog(lock, name, "use", access);
         } else if (locationOrg.scard(location) == 1) { // 关联方块
             // 获取锁
             final Location signLocation = locationOrg.get(location);
@@ -501,18 +501,6 @@ public class LocksmithImpl implements Locksmith {
             }
         }
         return sb;
-    }
-
-    private void listPlayers(@Nonnull Player player, @Nonnull Set<String> playerSet) {
-        final StringBuilder sb = new StringBuilder();
-        final TextComponent textComponent = new TextComponent();
-        //     .addExtra(this.getPlayerName(null))
-        for (String uid : playerSet) {
-            final String playerName = this.getPlayerName(uid);
-            final TextComponent textComponent2 = new TextComponent();
-            // textComponent.addExtra();
-        }
-        
     }
 
     /**

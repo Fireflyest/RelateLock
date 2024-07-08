@@ -99,19 +99,21 @@ public class LockEventListener implements Listener {
             if (lockOrganism.exist(block.getLocation())) {
                 return;
             }
-            lockOrganism.setex(block.getLocation(), 1, cooldownLock);
+            lockOrganism.setex(block.getLocation(), 5, cooldownLock);
+
             // 权限判断
             final Player player = event.getPlayer();
             final boolean result = locksmith.use(block.getLocation(), player);
-            if (result) {
+            if (!result) {
                 event.getPlayer().spigot()
-                     .sendMessage(ChatMessageType.ACTION_BAR, new ComponentBuilder("允许使用")
-                     .create());
-            } else {
-                event.getPlayer().spigot()
-                     .sendMessage(ChatMessageType.ACTION_BAR, new ComponentBuilder("已被上锁")
-                     .create());
+                    .sendMessage(ChatMessageType.ACTION_BAR, new ComponentBuilder("已被上锁")
+                    .create());
                 event.setCancelled(true);
+            }
+
+            // 查看锁
+            if (event.getPlayer().isSneaking()) {
+                player.performCommand("lock");
             }
         }
 

@@ -33,7 +33,7 @@ public abstract class SimpleCommand extends AbstractCommand
      * 简单指令
      */
     protected SimpleCommand() {
-        this(null);
+        super();
     }
 
     @Override
@@ -41,18 +41,8 @@ public abstract class SimpleCommand extends AbstractCommand
                              Command command, 
                              String label, 
                              String[] args) {
-        switch (args.length) {
-            case 0:
-                return execute(sender);
-            case 1:
-                return execute(sender, args[0]);
-            case 2:
-                return execute(sender, args[0], args[1]);
-            case 3:
-                return execute(sender, args[0], args[1], args[2]);
-            default:
-                return execute(sender, args);
-        }
+        
+        return this.executeCommand(sender, args);
     }
 
     @Nullable
@@ -65,12 +55,20 @@ public abstract class SimpleCommand extends AbstractCommand
         return this.getArgumentTab(index, sender, args[index]);
     }
 
+    @Override
+    public SimpleCommand async() {
+        super.async();
+        return this;
+    }
+
     /**
      * 添加变量
+     * 
      * @param arg 变量
      * @return 本身
      */
     public SimpleCommand addArg(@Nonnull Argument arg) {
+        final List<Argument> arguments = this.getArguments();
         if (arguments.size() < MAX_ARGS) {
             arguments.add(arg);
         }
@@ -82,13 +80,33 @@ public abstract class SimpleCommand extends AbstractCommand
      * 
      * @param plugin 插件
      */
-    public AbstractCommand apply(@Nonnull JavaPlugin plugin) {
+    public SimpleCommand apply(@Nonnull JavaPlugin plugin) {
+        this.plugin = plugin;
         final PluginCommand command = plugin.getCommand(this.getName());
         if (command != null) {
             command.setExecutor(this);
             command.setTabCompleter(this);
         }
         return this;
+    }
+
+    /**
+     * 执行指令
+     * @param sender 执行者
+     * @param args 参数
+     * @return 执行是否有效
+     */
+    private boolean executeCommand(@Nonnull CommandSender sender, @Nonnull String[] args) {
+        boolean valid = false;
+        final CommandRunnable runnable = this.runnable(sender, args);
+        if (this.isAsync() && plugin != null) {
+            runnable.runTaskAsynchronously(plugin);
+            valid = true;
+        } else {
+            runnable.run();
+            valid = runnable.isValid();
+        }
+        return valid;
     }
     
 }

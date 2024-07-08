@@ -5,20 +5,20 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nullable;
-import org.bukkit.Location;
 import io.fireflyest.relatelock.cache.api.Cell;
 
 /**
- * 缓存数据存储实现类
+ * 缓存数据存储抽象类
  * 
  * @author Fireflyest
  * @since 1.0
  */
-public class LocationCell implements Cell<Location> {
+public abstract class AbstractCell<T> implements Cell<T> {
 
-    private final Instant born;
-    private Instant deadline;
-    private final Set<Location> valueSet;
+    protected final Instant born;
+    protected Instant deadline;
+
+    protected final Set<T> valueSet;
 
     /**
      * 用于读取数据的构造函数
@@ -27,7 +27,7 @@ public class LocationCell implements Cell<Location> {
      * @param deadline 失效时间
      * @param valueSet 数据集
      */
-    public LocationCell(Instant born, Instant deadline, Set<Location> valueSet) {
+    protected AbstractCell(Instant born, Instant deadline, Set<T> valueSet) {
         this.born = born;
         this.deadline = deadline;
         this.valueSet = valueSet;
@@ -38,7 +38,7 @@ public class LocationCell implements Cell<Location> {
      * @param expire 失效时间，单位毫秒，值小于等于0表示无限制
      * @param value 值
      */
-    public LocationCell(long expire, Location value) {
+    protected AbstractCell(long expire, T value) {
         this(expire, new HashSet<>(Set.of(value)));
     }
 
@@ -47,23 +47,23 @@ public class LocationCell implements Cell<Location> {
      * @param expire 失效时间，单位毫秒，值小于等于0表示无限制
      * @param valueSet 值集
      */
-    public LocationCell(long expire, Set<Location> valueSet) {
+    protected AbstractCell(long expire, Set<T> valueSet) {
         this(Instant.now(), expire <= 0 ? null : Instant.now().plusMillis(expire), valueSet);
     }
 
     @Override
     @Nullable
-    public Location get() {
+    public T get() {
         // 无限期或者在期限内返回数据
-        if (deadline == null || Instant.now().isBefore(deadline)) {
-            return valueSet.toArray(new Location[0])[0];
+        if (!valueSet.isEmpty() && (deadline == null || Instant.now().isBefore(deadline))) {
+            return valueSet.iterator().next();
         }
         return null;
     }
 
     @Override
     @Nullable
-    public Set<Location> getAll() {
+    public Set<T> getAll() {
         // 无限期或者在期限内返回数据
         if (deadline == null || Instant.now().isBefore(deadline)) {
             return valueSet;
@@ -97,22 +97,16 @@ public class LocationCell implements Cell<Location> {
     public void persist() {
         deadline = null;
     }
-
-    /**
-     * 获取起始时间
-     * @return 起始时间
-     */
-    public Instant getBorn() {
+    
+    @Override
+    public Instant born() {
         return born;
     }
 
-    /**
-     * 获取失效时间
-     * @return 失效时间
-     */
+    @Override
     @Nullable
-    public Instant getDeadline() {
+    public Instant deadline() {
         return deadline;
     }
-    
+
 }

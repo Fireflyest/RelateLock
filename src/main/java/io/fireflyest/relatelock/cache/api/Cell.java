@@ -1,5 +1,6 @@
 package io.fireflyest.relatelock.cache.api;
 
+import java.time.Instant;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -23,7 +24,7 @@ public interface Cell<T> {
      */
     @Nullable
     Set<T> getAll();
-
+    
     /**
      * 数据剩余保留时间，如果没有限制，返回-1；如果到期，返回0
      * @return 剩余毫秒
@@ -46,5 +47,18 @@ public interface Cell<T> {
      * 设置为无限期数据。
      */
     public void persist();
+
+    /**
+     * 获取起始时间
+     * @return 起始时间
+     */
+    public Instant born();
+
+    /**
+     * 获取失效时间
+     * @return 失效时间
+     */
+    @Nullable
+    public Instant deadline();
 
 }

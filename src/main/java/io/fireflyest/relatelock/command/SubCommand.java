@@ -1,5 +1,6 @@
 package io.fireflyest.relatelock.command;
 
+import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import io.fireflyest.relatelock.command.args.Argument;
@@ -15,18 +16,7 @@ public abstract class SubCommand extends AbstractCommand {
     /**
      * 子指令权限
      */
-    protected final String permission;
-
-    /**
-     * 子指令
-     * 
-     * @param name 名称
-     * @param permission 权限
-     */
-    protected SubCommand(@Nullable String name, @Nullable String permission) {
-        super(name);
-        this.permission = permission;
-    }
+    protected String permission;
 
     /**
      * 子指令
@@ -34,22 +24,30 @@ public abstract class SubCommand extends AbstractCommand {
      * @param name 名称
      */
     protected SubCommand(@Nullable String name) {
-        this(name, null);
+        super(name);
     }
 
     /**
      * 子指令
      */
     protected SubCommand() {
-        this(null);
+        super();
+    }
+
+    @Override
+    public SubCommand async() {
+        super.async();
+        return this;
     }
 
     /**
      * 添加变量
+     * 
      * @param arg 变量
      * @return 本身
      */
     public SubCommand addArg(@Nonnull Argument arg) {
+        final List<Argument> arguments = this.getArguments();
         if (arguments.size() < MAX_ARGS) {
             arguments.add(arg);
         }

@@ -5,7 +5,6 @@ import javax.annotation.Nullable;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
-
 import io.fireflyest.relatelock.bean.Lock;
 
 /**
