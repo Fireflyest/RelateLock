@@ -27,6 +27,7 @@ public class RelateLockTest {
 
     @Test
     public void enmuTest() {
+        
         // Location location = new Location(null, 0, 0, 0);
         // String serialize = YamlUtils.serialize(location);
         // System.out.println(serialize);

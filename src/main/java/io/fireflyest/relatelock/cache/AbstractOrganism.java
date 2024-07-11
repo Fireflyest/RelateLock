@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.time.Instant;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -23,8 +25,11 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.plugin.Plugin;
 import io.fireflyest.relatelock.cache.api.Organism;
+import io.fireflyest.relatelock.util.StrUtils;
+import io.fireflyest.relatelock.util.YamlUtils;
 
 /**
  * 数据缓存组织抽象类
@@ -197,6 +202,68 @@ public abstract class AbstractOrganism<K, V> implements Organism<K, V> {
     @Override
     public Set<K> keySet() {
         return cacheMap.keySet();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public K deserializeKey(@Nonnull String keyStr) {
+        keyStr = StrUtils.base64Decode(keyStr);
+        final Type type = ((ParameterizedType) getClass().getGenericSuperclass())
+                .getActualTypeArguments()[0];
+        final Class<?> keyClass = (Class<?>) type;
+        final K k;
+        if (String.class.equals(keyClass)) {
+            k = (K) keyStr;
+        } else if (ConfigurationSerializable.class.isAssignableFrom(keyClass)) {
+            k = (K) YamlUtils.deserialize(keyStr, (Class<ConfigurationSerializable>) keyClass);
+        } else {
+            k = StrUtils.jsonToObj(keyStr, (Class<K>) keyClass);
+        }
+        return k;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public V deserializeValue(@Nonnull String valueStr) {
+        valueStr = StrUtils.base64Decode(valueStr);
+        final Type type = ((ParameterizedType) getClass().getGenericSuperclass())
+                .getActualTypeArguments()[1];
+        final Class<?> valueClass = (Class<?>) type;
+        final V v;
+        if (String.class.equals(valueClass)) {
+            v = (V) valueStr;
+        } else if (ConfigurationSerializable.class.isAssignableFrom(valueClass)) {
+            v = (V) YamlUtils.deserialize(valueStr, (Class<ConfigurationSerializable>) valueClass);
+        } else {
+            v = StrUtils.jsonToObj(valueStr, (Class<V>) valueClass);
+        }
+        return v;
+    }
+
+    @Override
+    public String serializeKey(@Nonnull K key) {
+        final String keyString;
+        if (key instanceof String) {
+            keyString = ((String) key);
+        } else if (key instanceof ConfigurationSerializable) {
+            keyString = YamlUtils.serialize((ConfigurationSerializable) key);
+        } else {
+            keyString = StrUtils.toJson(key);
+        }
+        return StrUtils.base64Encode(keyString);
+    }
+
+    @Override
+    public String serializeValue(@Nonnull V value) {
+        final String valueString;
+        if (value instanceof String) {
+            valueString = ((String) value);
+        } else if (value instanceof ConfigurationSerializable) {
+            valueString = YamlUtils.serialize((ConfigurationSerializable) value);
+        } else {
+            valueString = StrUtils.toJson(value);
+        }
+        return StrUtils.base64Encode(valueString);
     }
 
     @Override
