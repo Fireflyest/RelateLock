@@ -2,6 +2,8 @@ package io.fireflyest.relatelock;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 
 import org.apache.logging.log4j.util.Base64Util;
@@ -23,6 +25,13 @@ public class RelateLockTest {
         // String string = "world" + ',' + 1 + ',' + 2 + ',' + 3;
         long ms = Duration.between(start, Instant.now()).toMillis();
         System.out.println("ms=" + ms);
+
+        String log = "[§7" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "§r] " 
+                              + "who" 
+                              + (true ? " §a" : " §c")
+                              + "doWhat" + "§r";
+        System.out.println(log);
+        System.out.println(log.substring(3, 22));
     }
 
     @Test

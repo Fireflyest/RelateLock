@@ -1,5 +1,6 @@
 package io.fireflyest.relatelock.core;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -11,6 +12,7 @@ import java.util.UUID;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.Validate;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -43,6 +45,9 @@ public class LocksmithImpl implements Locksmith {
 
     private final Config config;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    public static final String EMPTY_SIGN_LOC = "The lock exist, but the signLocation is null!";
+    public static final String EMPTY_LOCK = "The lock don't exist!";
 
     /**
      * 所有上锁的位置
@@ -90,6 +95,18 @@ public class LocksmithImpl implements Locksmith {
         }
         this.locationOrg.save(plugin, entry);
         this.lockOrg.save(plugin, entry);
+    }
+
+    /**
+     * 整理日志，删除较久的日志
+     * 
+     * @param lock 锁
+     */
+    public void trimLogs(@Nonnull Lock lock) {
+        lock.getLog().removeIf(log -> {
+            final LocalDateTime time = LocalDateTime.parse(log.substring(3, 22), formatter);
+            return Duration.between(time, LocalDateTime.now()).toDays() > 7;
+        });
     }
 
     @Override
@@ -148,9 +165,9 @@ public class LocksmithImpl implements Locksmith {
     @Override
     public void unlock(@Nonnull Location signLocation) {
         // 解除所有关联方块位置锁
-        final Set<Location> smembers = locationOrg.smembers(signLocation);
-        if (smembers != null) {
-            final Iterator<Location> iterator = smembers.iterator();
+        final Set<Location> locations = locationOrg.smembers(signLocation);
+        if (locations != null) {
+            final Iterator<Location> iterator = locations.iterator();
             while (iterator.hasNext()) {
                 final Location next = iterator.next();
                 if (!next.equals(signLocation)) {
@@ -172,20 +189,14 @@ public class LocksmithImpl implements Locksmith {
         final String name = player.getName();
 
         boolean access = true;
+        final Lock lock = this.getLock(location);
+        if (lock == null) {
+            return access;
+        }
         if (locationOrg.scard(location) > 1) { // 主牌子
-            final Lock lock = lockOrg.get(location);
-            if (lock == null) {
-                return access;
-            }
             access = Objects.equal(lock.getOwner(), uid);
             this.addLog(lock, name, "use", access);
         } else if (locationOrg.scard(location) == 1) { // 关联方块
-            // 获取锁
-            final Location signLocation = locationOrg.get(location);
-            final Lock lock = lockOrg.get(signLocation);
-            if (lock == null) {
-                return access;
-            }
             if (location.getBlock().getBlockData() instanceof WallSign) { // 牌子
                 access = Objects.equal(lock.getOwner(), uid);
             } else { // 其他方块
@@ -205,13 +216,14 @@ public class LocksmithImpl implements Locksmith {
     @Override
     public boolean destroy(@Nonnull Location location, @Nonnull String uid, @Nonnull String name) {
         boolean access = true;
+        final Lock lock = this.getLock(location);
+        if (lock == null) {
+            return access;
+        }
         if (locationOrg.scard(location) == 1) { // 关联方块
             // 获取锁
             final Location signLocation = locationOrg.get(location);
-            final Lock lock = lockOrg.get(signLocation);
-            if (lock == null) {
-                return access;
-            }
+            Validate.notNull(signLocation, EMPTY_SIGN_LOC);
             // 多关联的情况下需要先解锁再破坏
             if (locationOrg.scard(signLocation) > 2) {
                 access = false;
@@ -228,11 +240,6 @@ public class LocksmithImpl implements Locksmith {
             // 日志
             this.addLog(lock, name, "destroy", access);
         } else if (locationOrg.scard(location) > 1) { // 主牌子
-            // 获取锁
-            final Lock lock = lockOrg.get(location);
-            if (lock == null) {
-                return access;
-            }
             // 判断是否有权限
             access = Objects.equal(lock.getOwner(), uid);
             if (access) {
@@ -272,15 +279,16 @@ public class LocksmithImpl implements Locksmith {
     public String[] signChange(@Nonnull Location location, 
                                @Nonnull String uid, 
                                @Nonnull String[] lines) {
-        
+
+        final Lock lock = this.getLock(location);
+        if (lock == null) {
+            return lines;
+        }
         if (locationOrg.scard(location) == 1) { // 牌子
-            final Location signLocation = locationOrg.get(location);
-            final Lock lock = lockOrg.get(signLocation);
             for (int i = 0; i < lines.length; i++) {
                 lines[i] = this.lineUpdate(lock, lines[i]);
             }
         } else if (locationOrg.scard(location) > 1) { // 主牌子
-            final Lock lock = lockOrg.get(location);
             lines[0] = "🔒 §l" + this.getPlayerName(lock.getOwner());
             lines[1] = this.lineUpdate(lock, lines[1]); 
             lines[2] = this.lineUpdate(lock, lines[2]); 
@@ -296,6 +304,7 @@ public class LocksmithImpl implements Locksmith {
         Lock lock = null;
         if (locationOrg.scard(location) == 1) { // 关联方块
             final Location signLocation = locationOrg.get(location);
+            Validate.notNull(signLocation, EMPTY_SIGN_LOC);
             lock = lockOrg.get(signLocation);
         } else if (locationOrg.scard(location) > 1) { // 主牌子
             lock = lockOrg.get(location);
@@ -337,9 +346,15 @@ public class LocksmithImpl implements Locksmith {
      */
     private void useLocation(@Nonnull Location location) {
         final Location signLocation = locationOrg.get(location);
+        Validate.notNull(signLocation, EMPTY_SIGN_LOC);
 
+        final Set<Location> locations = locationOrg.smembers(signLocation);
+        if (locations == null) {
+            return;
+        }
+            
         Boolean isOpen = null;
-        for (Location useLocation : locationOrg.smembers(signLocation)) {
+        for (Location useLocation : locations) {
             final Block block = useLocation.getBlock();
             if (block.getBlockData() instanceof Door door) { //门
                 if (isOpen == null) {
@@ -365,7 +380,9 @@ public class LocksmithImpl implements Locksmith {
         if (anotherChest != null && anotherChest.getBlockData() instanceof Chest
                                  && this.isLocationLocked(anotherChest.getLocation())) {
             final Location signLocation = locationOrg.get(anotherChest.getLocation());
+            Validate.notNull(signLocation, EMPTY_SIGN_LOC);
             final Lock lock = lockOrg.get(signLocation);
+            Validate.notNull(lock, EMPTY_LOCK);
             access = Objects.equal(lock.getOwner(), uid);
             if (access) {
                 Print.RELATE_LOCK.debug("LocksmithImpl.place() -> chest");
@@ -388,7 +405,9 @@ public class LocksmithImpl implements Locksmith {
         if (anotherDoor != null && anotherDoor.getBlockData() instanceof Door
                                 && this.isLocationLocked(anotherDoor.getLocation())) {
             final Location signLocation = locationOrg.get(anotherDoor.getLocation());
+            Validate.notNull(signLocation, EMPTY_SIGN_LOC);
             final Lock lock = lockOrg.get(signLocation);
+            Validate.notNull(lock, EMPTY_LOCK);
             access = Objects.equal(lock.getOwner(), uid);
             if (access) {
                 Print.RELATE_LOCK.debug("LocksmithImpl.place() -> door");
@@ -413,7 +432,9 @@ public class LocksmithImpl implements Locksmith {
         final Block attachBlock = BlockUtils.blockAttach(block);
         if (attachBlock != null && this.isLocationLocked(attachBlock.getLocation())) {
             final Location signLocation = locationOrg.get(attachBlock.getLocation());
+            Validate.notNull(signLocation, EMPTY_SIGN_LOC);
             final Lock lock = lockOrg.get(signLocation);
+            Validate.notNull(lock, EMPTY_LOCK);
             access = Objects.equal(lock.getOwner(), uid);
             if (access) {
                 Print.RELATE_LOCK.debug("LocksmithImpl.place() -> sign");
@@ -435,7 +456,9 @@ public class LocksmithImpl implements Locksmith {
         final Block attachBlock = block.getRelative(BlockFace.UP);
         if (attachBlock != null && this.isLocationLocked(attachBlock.getLocation())) {
             final Location signLocation = locationOrg.get(attachBlock.getLocation());
+            Validate.notNull(signLocation, EMPTY_SIGN_LOC);
             final Lock lock = lockOrg.get(signLocation);
+            Validate.notNull(lock, EMPTY_LOCK);
             access = Objects.equal(lock.getOwner(), uid);
             if (access) {
                 Print.RELATE_LOCK.debug("LocksmithImpl.place() -> sign");
@@ -457,9 +480,9 @@ public class LocksmithImpl implements Locksmith {
             return line;
         }
         // 添加玩家
-        final String[] entrys = StringUtils.split(line, ',');
+        final String[] entries = StringUtils.split(line, ',');
         final StringBuilder sb = new StringBuilder();
-        for (String entry : entrys) {
+        for (String entry : entries) {
             sb.append(this.updateShare(lock, entry));
         }
         return StringUtils.removeStart(sb.toString(), ",");
@@ -546,15 +569,6 @@ public class LocksmithImpl implements Locksmith {
                               + who 
                               + (access ? " §a" : " §c")
                               + doWhat + "§r");
-    }
-
-    /**
-     * 整理日志，删除较久的日志
-     * 
-     * @param lock 锁
-     */
-    private void trimLogs(@Nonnull Lock lock) {
-
     }
 
 }
