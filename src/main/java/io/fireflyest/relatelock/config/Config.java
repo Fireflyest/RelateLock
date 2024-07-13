@@ -9,6 +9,9 @@ package io.fireflyest.relatelock.config;
 public record Config(
     boolean debug, 
     String lockString, 
+    String lockPasswordString, 
+    String lockFeeString, 
+    String lockTokenString, 
     String shareSymbol, 
     String managerSymbol,
     String removeSymbol) {}

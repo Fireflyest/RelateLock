@@ -37,6 +37,9 @@ public final class RelateLock extends JavaPlugin {
         final FileConfiguration configFile = YamlUtils.getConfig(this);
         final Config config = new Config(configFile.getBoolean("Debug"), 
                                          configFile.getString("LockSymbol"),
+                                         configFile.getString("LockPasswordSymbol"),
+                                         configFile.getString("LockFeeSymbol"),
+                                         configFile.getString("LockTokenSymbol"),
                                          configFile.getString("ShareSymbol"),
                                          configFile.getString("ManagerSymbol"),
                                          configFile.getString("RemoveSymbol"));

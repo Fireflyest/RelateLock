@@ -1,10 +1,12 @@
 package io.fireflyest.relatelock.listener;
 
 import java.time.Instant;
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
 import org.bukkit.block.TileState;
+import org.bukkit.block.data.Openable;
 import org.bukkit.block.data.type.Door;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -59,9 +61,23 @@ public class LockEventListener implements Listener {
         final Block block = event.getBlock();
         final String uid = player.getUniqueId().toString();
 
-        // 上锁
-        if (config.lockString().equals(lines[0])) {
-            final Lock lock = new Lock(uid, Instant.now().toEpochMilli(), "normal", null);
+        // 是否新锁
+        Lock lock = null;
+        if (lines[0].equalsIgnoreCase(config.lockString())) {
+            lock = new Lock(uid, Instant.now().toEpochMilli(), "normal", null);
+        } else {
+            final String[] firstLine = StringUtils.split(lines[0], " ");
+            final String type = firstLine[0];
+            final String data = firstLine.length > 1 ? firstLine[1] : "123";
+            if (type.equalsIgnoreCase(config.lockPasswordString())
+                    || type.equalsIgnoreCase(config.lockFeeString())
+                    || type.equalsIgnoreCase(config.lockTokenString())) {
+                lock = new Lock(uid, Instant.now().toEpochMilli(), type, data);
+            }
+        }
+
+        // 新锁上锁
+        if (lock != null) {
             final boolean result = locksmith.lock(event.getBlock(), lock);
             if (result) {
                 player.playSound(player, Sound.BLOCK_IRON_DOOR_CLOSE, 1, 1);
@@ -70,7 +86,7 @@ public class LockEventListener implements Listener {
             }
         }
 
-        // 更新牌子文本
+        // 更新已上锁牌子文本
         if (locksmith.isLocationLocked(block.getLocation())) {
             // 上锁牌子修改
             final String[] newLines = locksmith.signChange(block.getLocation(), uid, lines);
@@ -92,29 +108,30 @@ public class LockEventListener implements Listener {
             return;
         }
 
-        if (block.getState() instanceof TileState || block.getBlockData() instanceof Door) {
-            // 防止操作的时候使用手上物品
+        // 防止操作门的时候使用手上物品
+        if (block.getBlockData() instanceof Openable) {
             event.setUseItemInHand(Result.DENY);
-            // 冷却防止重复点击
-            if (lockOrganism.exist(block.getLocation())) {
-                return;
-            }
-            lockOrganism.setex(block.getLocation(), 5, cooldownLock);
+        }
 
-            // 权限判断
-            final Player player = event.getPlayer();
-            final boolean result = locksmith.use(block.getLocation(), player);
-            if (!result) {
-                event.getPlayer().spigot()
-                    .sendMessage(ChatMessageType.ACTION_BAR, new ComponentBuilder("已被上锁")
-                    .create());
-                event.setCancelled(true);
-            }
+        // 冷却防止重复点击
+        if (lockOrganism.exist(block.getLocation())) {
+            return;
+        }
+        lockOrganism.setex(block.getLocation(), 5, cooldownLock);
 
-            // 查看锁
-            if (event.getPlayer().isSneaking()) {
-                player.performCommand("lock");
-            }
+        // 权限判断
+        final Player player = event.getPlayer();
+        final boolean result = locksmith.use(block.getLocation(), player);
+        if (!result) {
+            event.getPlayer().spigot()
+                .sendMessage(ChatMessageType.ACTION_BAR, new ComponentBuilder("已被上锁")
+                .create());
+            event.setCancelled(true);
+        }
+
+        // 查看锁
+        if (event.getPlayer().isSneaking()) {
+            player.performCommand("lock");
         }
 
     }

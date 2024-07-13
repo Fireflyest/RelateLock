@@ -26,12 +26,12 @@ public class RelateLockTest {
         long ms = Duration.between(start, Instant.now()).toMillis();
         System.out.println("ms=" + ms);
 
-        String log = "[§7" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "§r] " 
+        String log = "[§7" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMdd HH:mm")) + "§r] " 
                               + "who" 
                               + (true ? " §a" : " §c")
                               + "doWhat" + "§r";
         System.out.println(log);
-        System.out.println(log.substring(3, 22));
+        System.out.println(log.substring(3, 15));
     }
 
     @Test

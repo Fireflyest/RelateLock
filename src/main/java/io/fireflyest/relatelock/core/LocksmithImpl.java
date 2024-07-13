@@ -44,7 +44,7 @@ import io.fireflyest.relatelock.util.BlockUtils;
 public class LocksmithImpl implements Locksmith {
 
     private final Config config;
-    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyMMdd HH:mm");
 
     public static final String EMPTY_SIGN_LOC = "The lock exist, but the signLocation is null!";
     public static final String EMPTY_LOCK = "The lock don't exist!";
@@ -104,7 +104,7 @@ public class LocksmithImpl implements Locksmith {
      */
     public void trimLogs(@Nonnull Lock lock) {
         lock.getLog().removeIf(log -> {
-            final LocalDateTime time = LocalDateTime.parse(log.substring(3, 22), formatter);
+            final LocalDateTime time = LocalDateTime.parse(log.substring(3, 15), formatter);
             return Duration.between(time, LocalDateTime.now()).toDays() > 7;
         });
     }
@@ -128,7 +128,7 @@ public class LocksmithImpl implements Locksmith {
         } else if (attachBlock.getBlockData() instanceof Bisected) { // 上下分方块
             Print.RELATE_LOCK.debug("LocksmithImpl.lock() -> bisected");
             relate = new BisectedRelate(signBlock, attachBlock);
-        } else if (attachBlock.getState() instanceof TileState) { // 其他可更新方块
+        } else if (attachBlock.getState() instanceof TileState) { // 方块实体
             Print.RELATE_LOCK.debug("LocksmithImpl.lock() -> tile");
             relate = new TileRelate(signBlock, attachBlock);
         } else { // 上锁贴着方块附近的方块
@@ -352,19 +352,24 @@ public class LocksmithImpl implements Locksmith {
         if (locations == null) {
             return;
         }
-            
-        Boolean isOpen = null;
-        for (Location useLocation : locations) {
-            final Block block = useLocation.getBlock();
-            if (block.getBlockData() instanceof Door door) { //门
-                if (isOpen == null) {
-                    isOpen = !door.isOpen();
+
+
+        final Block clickBlock = location.getBlock();
+        if (clickBlock.getBlockData() instanceof Door) { //门
+            Boolean isOpen = null;
+            for (Location useLocation : locations) {
+                final Block block = useLocation.getBlock();
+                if (block.getBlockData() instanceof Door door) {
+                    if (isOpen == null) {
+                        isOpen = !door.isOpen();
+                    }
+                    door.setOpen(isOpen);
+                    block.setBlockData(door);
+                    Print.RELATE_LOCK.debug("LocksmithImpl.useLocation() -> door open:{}", isOpen);
                 }
-                door.setOpen(isOpen);
-                block.setBlockData(door);
-                Print.RELATE_LOCK.debug("LocksmithImpl.useLocation() -> door open:{}", isOpen);
             }
         }
+
     }
 
     /**
