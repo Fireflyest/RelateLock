@@ -33,7 +33,7 @@ public class LockCommand extends ComplexCommand {
 
     private final LocksmithImpl locksmith;
 
-    public LockCommand(LocksmithImpl locksmith) {
+    public LockCommand(@Nonnull LocksmithImpl locksmith) {
         this.locksmith = locksmith;
     }
 
@@ -45,6 +45,7 @@ public class LockCommand extends ComplexCommand {
             if (block != null && (lock = locksmith.getLock(block.getLocation())) != null) {
                 locksmith.trimLogs(lock);
                 player.spigot().sendMessage(this.anPlayer("🔒", lock.getOwner()));
+                player.sendMessage("类型: " + lock.getType());
                 player.spigot().sendMessage(this.listPlayers("共享:", lock.getShare()));
                 if (player.getUniqueId().toString().equals(lock.getOwner())) {
                     player.spigot().sendMessage(this.listLogs("记录:", lock.getLog()));

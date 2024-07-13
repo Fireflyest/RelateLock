@@ -6,7 +6,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import io.fireflyest.relatelock.command.LockBackupCommand;
 import io.fireflyest.relatelock.command.LockCommand;
 import io.fireflyest.relatelock.command.LockLogsCommand;
-import io.fireflyest.relatelock.command.LockPwdCommand;
+import io.fireflyest.relatelock.command.LockDataCommand;
 import io.fireflyest.relatelock.config.Config;
 import io.fireflyest.relatelock.core.LocksmithImpl;
 import io.fireflyest.relatelock.core.api.Locksmith;
@@ -54,7 +54,7 @@ public final class RelateLock extends JavaPlugin {
             .register(Locksmith.class, locksmith, this, ServicePriority.Normal);
 
         new LockCommand(locksmith)
-            .addSub(new LockPwdCommand(locksmith))
+            .addSub(new LockDataCommand(locksmith))
             .addSub(new LockBackupCommand(locksmith).async())
             .addSub(new LockLogsCommand(locksmith))
             .apply(this);
