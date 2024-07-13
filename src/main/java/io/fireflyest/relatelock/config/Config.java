@@ -11,7 +11,4 @@ public record Config(
     String lockString, 
     String lockPasswordString, 
     String lockFeeString, 
-    String lockTokenString, 
-    String shareSymbol, 
-    String managerSymbol,
-    String removeSymbol) {}
+    String lockTokenString) {}

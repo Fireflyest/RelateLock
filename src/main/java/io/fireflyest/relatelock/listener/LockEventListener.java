@@ -5,9 +5,7 @@ import org.apache.commons.lang.StringUtils;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.block.Block;
-import org.bukkit.block.TileState;
 import org.bukkit.block.data.Openable;
-import org.bukkit.block.data.type.Door;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -15,7 +13,10 @@ import org.bukkit.event.Event.Result;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockExplodeEvent;
+import org.bukkit.event.block.BlockPistonExtendEvent;
+import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -63,29 +64,25 @@ public class LockEventListener implements Listener {
 
         // 是否新锁
         Lock lock = null;
-        if (StringUtils.isNotEmpty(lines[0])) {
-            if (lines[0].equalsIgnoreCase(config.lockString())) {
-                lock = new Lock(uid, Instant.now().toEpochMilli(), "normal", null);
-            } else {
-                final String[] firstLine = StringUtils.split(lines[0], " ");
-                final String type = firstLine[0];
-                final String data = firstLine.length > 1 ? firstLine[1] : "123";
-                if (type.equalsIgnoreCase(config.lockPasswordString())
-                        || type.equalsIgnoreCase(config.lockFeeString())
-                        || type.equalsIgnoreCase(config.lockTokenString())) {
-                    lock = new Lock(uid, Instant.now().toEpochMilli(), type, data);
-                }
+        if (lines[0].equalsIgnoreCase(config.lockString())) {
+            lock = new Lock(uid, Instant.now().toEpochMilli(), "normal", null);
+        } else {
+            final String[] firstLine = StringUtils.split(lines[0], " ");
+            final String type = firstLine.length > 0 ? firstLine[0] : "";
+            final String data = firstLine.length > 1 ? firstLine[1] : "123";
+            if (type.equalsIgnoreCase(config.lockPasswordString())
+                    || type.equalsIgnoreCase(config.lockFeeString())
+                    || type.equalsIgnoreCase(config.lockTokenString())) {
+                lock = new Lock(uid, Instant.now().toEpochMilli(), type, data);
             }
         }
 
         // 新锁上锁
-        if (lock != null) {
-            final boolean result = locksmith.lock(event.getBlock(), lock);
-            if (result) {
-                player.playSound(player, Sound.BLOCK_IRON_DOOR_CLOSE, 1, 1);
-                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, 
-                                            new ComponentBuilder("已上锁").create());
-            }
+        if (lock != null && locksmith.lock(event.getBlock(), lock)) {
+            player.playSound(player, Sound.BLOCK_IRON_DOOR_CLOSE, 1, 1);
+            player.spigot().sendMessage(
+                ChatMessageType.ACTION_BAR, new ComponentBuilder("已上锁").create()
+            );
         }
 
         // 更新已上锁牌子文本
@@ -126,8 +123,8 @@ public class LockEventListener implements Listener {
         final boolean result = locksmith.use(block.getLocation(), player);
         if (!result) {
             event.getPlayer().spigot()
-                .sendMessage(ChatMessageType.ACTION_BAR, new ComponentBuilder("已被上锁")
-                .create());
+                 .sendMessage(ChatMessageType.ACTION_BAR, new ComponentBuilder("已被上锁")
+                 .create());
             event.setCancelled(true);
         }
 
@@ -212,6 +209,48 @@ public class LockEventListener implements Listener {
     @EventHandler
     public void onEntityExplode(EntityExplodeEvent event) {
         event.blockList().removeIf(block -> locksmith.isLocationLocked(block.getLocation()));
+    }
+
+    /**
+     * 方块活塞事件
+     * 
+     * @param event 事件
+     */
+    @EventHandler
+    public void onBlockPistonExtend(BlockPistonExtendEvent event) {
+        for (Block block : event.getBlocks()) {
+            if (locksmith.isLocationLocked(block.getLocation())) {
+                event.setCancelled(true);
+                break;
+            }
+        }
+    }
+
+    /**
+     * 方块活塞事件
+     * 
+     * @param event 事件
+     */
+    @EventHandler
+    public void onBlockPistonRetract(BlockPistonRetractEvent event) {
+        for (Block block : event.getBlocks()) {
+            if (locksmith.isLocationLocked(block.getLocation())) {
+                event.setCancelled(true);
+                break;
+            }
+        }
+    }
+
+    /**
+     * 方块红石事件
+     * 
+     * @param event 事件
+     */
+    @EventHandler
+    public void onBlockRedstone(BlockRedstoneEvent event) {
+        if (locksmith.isLocationLocked(event.getBlock().getLocation())) {
+            event.setNewCurrent(0);
+        }
     }
 
 }

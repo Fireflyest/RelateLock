@@ -4,6 +4,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Door;
+import org.bukkit.block.data.type.TrapDoor;
 import io.fireflyest.relatelock.Print;
 
 /**
@@ -23,6 +24,9 @@ public class OpenableRelate extends Relate {
         if (attachBlock.getBlockData() instanceof Door) {
             Print.RELATE_LOCK.debug("OpenableRelate.traceRelateBlocks() -> door");
             subRelate.add(new DoorRelate(null, attachBlock));
+        } else if (attachBlock.getBlockData() instanceof TrapDoor) {
+            Print.RELATE_LOCK.debug("OpenableRelate.traceRelateBlocks() -> trap door");
+            subRelate.add(new TrapDoorRelate(null, attachBlock));
         } else {
             Print.RELATE_LOCK.debug("OpenableRelate.traceRelateBlocks() -> openable");
             relateBlocks.add(attachBlock);

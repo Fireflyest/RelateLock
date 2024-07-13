@@ -15,6 +15,7 @@ import org.bukkit.entity.Player;
 import io.fireflyest.relatelock.bean.Lock;
 import io.fireflyest.relatelock.core.LocksmithImpl;
 import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.HoverEvent.Action;
@@ -44,9 +45,10 @@ public class LockCommand extends ComplexCommand {
             if (block != null && (lock = locksmith.getLock(block.getLocation())) != null) {
                 locksmith.trimLogs(lock);
                 player.spigot().sendMessage(this.anPlayer("🔒", lock.getOwner()));
-                player.spigot().sendMessage(this.listPlayers("管理:", lock.getManager()));
                 player.spigot().sendMessage(this.listPlayers("共享:", lock.getShare()));
-                player.spigot().sendMessage(this.listLogs("记录:", lock.getLog()));
+                if (player.getUniqueId().toString().equals(lock.getOwner())) {
+                    player.spigot().sendMessage(this.listLogs("记录:", lock.getLog()));
+                }
             }
         }
         return true;
@@ -69,7 +71,8 @@ public class LockCommand extends ComplexCommand {
                                                   new TextComponent(playerName));
             componentBuilder.append(" ")
                             .append(playerName)
-                            .event(new HoverEvent(Action.SHOW_ENTITY, entity));
+                            .event(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, playerName))
+                            .event(new HoverEvent(HoverEvent.Action.SHOW_ENTITY, entity));
         }
         return componentBuilder.create();
     }

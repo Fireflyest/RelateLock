@@ -20,10 +20,12 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Dropper;
+import org.bukkit.block.Sign;
 import org.bukkit.block.TileState;
 import org.bukkit.block.data.Openable;
 import org.bukkit.block.data.type.Chest;
 import org.bukkit.block.data.type.Door;
+import org.bukkit.block.data.type.TrapDoor;
 import org.bukkit.block.data.type.WallSign;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -47,7 +49,11 @@ public class LocksmithImpl implements Locksmith {
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyMMdd HH:mm");
 
     public static final String EMPTY_SIGN_LOC = "The lock exist, but the signLocation is null!";
+    public static final String EMPTY_LOCK_LOCS = "The lock exist, but the locations is null!";
     public static final String EMPTY_LOCK = "The lock don't exist!";
+
+    public static final String DESC_SIGN = "sign";
+    public static final String DESC_MAIN_SIGN = "main_sign";
 
     /**
      * 所有上锁的位置
@@ -186,26 +192,32 @@ public class LocksmithImpl implements Locksmith {
         final String name = player.getName();
 
         boolean access = true;
+        String desc = "";
         final Lock lock = this.getLock(location);
         if (lock == null) {
             return access;
         }
         if (locationOrg.scard(location) > 1) { // 主牌子
             access = Objects.equal(lock.getOwner(), uid);
-            this.addLog(lock, name, "use", access);
+            desc = DESC_MAIN_SIGN;
+            this.addLog(lock, name, "E", access, desc);
         } else if (locationOrg.scard(location) == 1) { // 关联方块
             if (location.getBlock().getBlockData() instanceof WallSign) { // 牌子
                 access = Objects.equal(lock.getOwner(), uid);
+                desc = DESC_SIGN;
+                this.addLog(lock, name, "E", access, desc);
             } else { // 其他方块
+                boolean canUse = false;
                 access = Objects.equal(lock.getOwner(), uid)
-                                    || lock.getShare().contains(uid)
-                                    || lock.getManager().contains(uid);
+                                    || lock.getShare().contains(uid);
+                desc = location.getBlock().getType().name().toLowerCase();
                 if (access) {
-                    this.useLocation(location);
+                    canUse = this.useLocation(location);
+                }
+                if (canUse) {
+                    this.addLog(lock, name, "U", access, desc);
                 }
             }
-            // 日志
-            this.addLog(lock, name, "use", access);
         }
         return access;
     }
@@ -213,29 +225,36 @@ public class LocksmithImpl implements Locksmith {
     @Override
     public boolean destroy(@Nonnull Location location, @Nonnull String uid, @Nonnull String name) {
         boolean access = true;
+        String desc = "";
         final Lock lock = this.getLock(location);
         if (lock == null) {
             return access;
         }
         if (locationOrg.scard(location) == 1) { // 关联方块
-            // 获取锁
             final Location signLocation = locationOrg.get(location);
+            final boolean destroyMainSign;
             Validate.notNull(signLocation, EMPTY_SIGN_LOC);
-            // 多关联的情况下需要先解锁再破坏
-            if (locationOrg.scard(signLocation) > 2) {
-                access = false;
-                this.addLog(lock, name, "destroy", access);
-                return access;
+            if (location.getBlock().getBlockData() instanceof WallSign) { // 牌子
+                access = Objects.equal(lock.getOwner(), uid);
+                destroyMainSign = false;
+                desc = DESC_SIGN;
+            } else { // 其他方块
+                access = Objects.equal(lock.getOwner(), uid) && locationOrg.scard(signLocation) < 3;
+                destroyMainSign = true;
+                desc = location.getBlock().getType().name().toLowerCase();
             }
-            // 判断是否有权限
-            access = Objects.equal(lock.getOwner(), uid);
-            // 解除锁
+
+            this.addLog(lock, name, "D", access, desc);
+            
             if (access) {
-                this.unlockLocation(location, signLocation);
-                this.unlockLocation(signLocation, signLocation);
+                if (destroyMainSign) { // 方块连同牌子一起破坏
+                    this.unlock(signLocation);
+                    lockOrg.del(signLocation);
+                } else { // 破坏牌子
+                    this.destroySign(lock, location);
+                    this.unlockLocation(location, signLocation);
+                }
             }   
-            // 日志
-            this.addLog(lock, name, "destroy", access);
         } else if (locationOrg.scard(location) > 1) { // 主牌子
             // 判断是否有权限
             access = Objects.equal(lock.getOwner(), uid);
@@ -247,8 +266,6 @@ public class LocksmithImpl implements Locksmith {
         return access;
     }
 
-
-    
     @Override
     public boolean place(@Nonnull Block block, @Nonnull String uid) {
         boolean access = true;
@@ -257,6 +274,8 @@ public class LocksmithImpl implements Locksmith {
             access = this.placeChest(block, uid);
         } else if (block.getBlockData() instanceof Door) {
             access = this.placeDoor(block, uid);
+        } else if (block.getBlockData() instanceof TrapDoor) {
+            access = this.placeTrapDoor(block, uid);
         } else if (block.getBlockData() instanceof WallSign) {
             access = this.placeSign(block, uid);
         } else if (block.getState() instanceof Dropper) {
@@ -281,6 +300,27 @@ public class LocksmithImpl implements Locksmith {
         if (lock == null) {
             return lines;
         }
+        // 重置共享玩家
+        lock.getShare().clear();
+
+        // 其他
+        final Location signLocation = locationOrg.get(location);
+        Validate.notNull(signLocation, EMPTY_SIGN_LOC);
+        final Set<Location> locations = locationOrg.smembers(signLocation);
+        Validate.notNull(locations, EMPTY_LOCK_LOCS);
+        for (Location relateLocation : locations) {
+            if (location.equals(relateLocation)) {
+                continue;
+            }
+            final Block block = relateLocation.getBlock();
+            if (block.getState() instanceof Sign sign) {
+                for (String line : sign.getLines()) {
+                    this.lineUpdate(lock, line);
+                }
+            }
+        }
+
+        // 更新
         if (locationOrg.scard(location) == 1) { // 牌子
             for (int i = 0; i < lines.length; i++) {
                 lines[i] = this.lineUpdate(lock, lines[i]);
@@ -291,7 +331,6 @@ public class LocksmithImpl implements Locksmith {
             lines[2] = this.lineUpdate(lock, lines[2]); 
             lines[3] = this.lineUpdate(lock, lines[3]); 
         }
-
         return lines;
     }
 
@@ -341,18 +380,23 @@ public class LocksmithImpl implements Locksmith {
      * 使用方块
      * @param location 方块位置
      */
-    private void useLocation(@Nonnull Location location) {
+    private boolean useLocation(@Nonnull Location location) {
+        boolean canUse = false;
+
         final Location signLocation = locationOrg.get(location);
         Validate.notNull(signLocation, EMPTY_SIGN_LOC);
 
         final Set<Location> locations = locationOrg.smembers(signLocation);
         if (locations == null) {
-            return;
+            return canUse;
         }
 
 
         final Block clickBlock = location.getBlock();
-        if (clickBlock.getBlockData() instanceof Openable) { // 可开关
+        if (clickBlock.getBlockData() instanceof Chest) { // 箱子
+            canUse = true;
+        } else if (clickBlock.getBlockData() instanceof Openable) { // 可开关方块
+            canUse = true;
             Boolean isOpen = null;
             for (Location useLocation : locations) {
                 final Block block = useLocation.getBlock();
@@ -365,8 +409,25 @@ public class LocksmithImpl implements Locksmith {
                     Print.RELATE_LOCK.debug("LocksmithImpl.useLocation() -> open:{}", isOpen);
                 }
             }
+        } else if (clickBlock.getState() instanceof TileState) { // 实体方块
+            canUse = true;
         }
 
+        return canUse;
+    }
+
+    /**
+     * 牌子破坏后更新共享
+     * 
+     * @param location 位置
+     * @param uid 玩家UUID
+     */
+    private void destroySign(@Nonnull Lock lock, @Nonnull Location location) {
+        if (location.getBlock().getState() instanceof Sign sign) {
+            for (String line : sign.getLines()) {
+                this.lineUpdate(lock, line, true);
+            }
+        }
     }
 
     /**
@@ -423,6 +484,32 @@ public class LocksmithImpl implements Locksmith {
     }
 
     /**
+     * 放置活板门
+     * 
+     * @param block 方块
+     * @param uid 玩家uuid
+     * @return 是否可放置
+     */
+    private boolean placeTrapDoor(@Nonnull Block block, @Nonnull String uid) {
+        boolean access = true;
+        final Block anotherDoor = BlockUtils.anotherTrapDoor(block);
+        if (anotherDoor != null && anotherDoor.getBlockData() instanceof TrapDoor
+                                && this.isLocationLocked(anotherDoor.getLocation())) {
+            final Location signLocation = locationOrg.get(anotherDoor.getLocation());
+            Validate.notNull(signLocation, EMPTY_SIGN_LOC);
+            final Lock lock = lockOrg.get(signLocation);
+            Validate.notNull(lock, EMPTY_LOCK);
+            access = Objects.equal(lock.getOwner(), uid);
+            if (access) {
+                Print.RELATE_LOCK.debug("LocksmithImpl.place() -> trap door");
+                this.lockLocation(block.getLocation(), signLocation);
+            }
+        }
+        return access;
+    }
+
+
+    /**
      * 放置牌子
      * 
      * @param block 方块
@@ -472,60 +559,43 @@ public class LocksmithImpl implements Locksmith {
 
     /**
      * 牌子内容更新
+     * 
      * @param lock 锁
      * @param line 行
+     * @param destroy 是否破坏
      * @return 更新后的行
      */
-    private String lineUpdate(@Nonnull Lock lock, @Nonnull String line) {
-        // 注释
-        if (StringUtils.contains(line, '[') && StringUtils.contains(line, ']')) {
-            return line;
-        }
-        // 添加玩家
+    private String lineUpdate(@Nonnull Lock lock, @Nonnull String line, boolean destroy) {
         final String[] entries = StringUtils.split(line, ',');
         final StringBuilder sb = new StringBuilder();
         for (String entry : entries) {
-            sb.append(this.updateShare(lock, entry));
+            final OfflinePlayer offlinePlayer = this.getOfflinePlayer(entry);
+            if (offlinePlayer != null) { // 文本是玩家名称
+                final String uid = offlinePlayer.getUniqueId().toString();
+                if (destroy) {
+                    lock.getShare().remove(uid);
+                } else {
+                    if (!lock.getShare().contains(uid)) {
+                        sb.append(",").append(offlinePlayer.getName());
+                        lock.getShare().add(uid);
+                    } 
+                }
+            } else { // 非玩家名称直接加回去
+                sb.append(",").append(entry);
+            }
         }
         return StringUtils.removeStart(sb.toString(), ",");
     }
 
     /**
-     * 更新共享
+     * 牌子内容更新
      * 
      * @param lock 锁
-     * @param entry 输入的玩家名称
-     * @return 更新的玩家名称
+     * @param line 行
+     * @return 更新后的行
      */
-    private StringBuilder updateShare(@Nonnull Lock lock, @Nonnull String entry) {
-        final StringBuilder sb = new StringBuilder();
-        String playerName = null;
-        String uid = null;
-        if (entry.startsWith(config.managerSymbol())) { // 管理
-            playerName = StringUtils.removeStart(entry, config.managerSymbol());
-            uid = this.getPlayerUid(playerName);
-            if (uid != null) {
-                sb.append(",").append(config.managerSymbol())
-                  .append("§r").append(playerName);
-                lock.getManager().add(uid);
-            }
-        } else if (entry.startsWith(config.removeSymbol())) { // 移除
-            playerName = StringUtils.removeStart(entry, config.removeSymbol());
-            uid = this.getPlayerUid(playerName);
-            if (uid != null) {
-                lock.getShare().remove(uid);
-                lock.getManager().remove(uid);
-            }
-        } else { // 默认共享
-            playerName = StringUtils.removeStart(entry, config.shareSymbol());
-            uid = this.getPlayerUid(playerName);
-            if (uid != null) {
-                sb.append(",").append(config.shareSymbol())
-                  .append("§r").append(playerName);
-                lock.getShare().add(uid);
-            }
-        }
-        return sb;
+    private String lineUpdate(@Nonnull Lock lock, @Nonnull String line) {
+        return this.lineUpdate(lock, line, false);
     }
 
     /**
@@ -539,23 +609,23 @@ public class LocksmithImpl implements Locksmith {
     }
 
     /**
-     * 获取玩家UUID
+     * 获取离线玩家
+     * 
      * @param playerName 玩家名称
-     * @return 玩家UUID
+     * @return 离线玩家
      */
     @Nullable
-    private String getPlayerUid(String playerName) {
-        final Player player = Bukkit.getPlayerExact(playerName);
+    private OfflinePlayer getOfflinePlayer(String playerName) {
+        OfflinePlayer player = Bukkit.getPlayerExact(playerName);
         // 如果玩家离线
         if (player == null) {
             for (OfflinePlayer offlinePlayer : Bukkit.getOfflinePlayers()) {
                 if (playerName.equals(offlinePlayer.getName())) {
-                    return offlinePlayer.getUniqueId().toString();
+                    player = offlinePlayer;
                 }
             }
-            return null;
         }
-        return player.getUniqueId().toString();
+        return player;
     }
 
     /**
@@ -566,11 +636,16 @@ public class LocksmithImpl implements Locksmith {
      * @param doWhat 玩家操作
      * @param access 是否允许
      */
-    private void addLog(@Nonnull Lock lock, @Nonnull String who, String doWhat, boolean access) {
+    private void addLog(@Nonnull Lock lock, 
+                        @Nonnull String who, 
+                        String doWhat, 
+                        boolean access,
+                        String desc) {
         lock.getLog().add("[§7" + LocalDateTime.now().format(formatter) + "§r] " 
                               + who 
                               + (access ? " §a" : " §c")
-                              + doWhat + "§r");
+                              + doWhat + "§r:"
+                              + desc);
     }
 
 }

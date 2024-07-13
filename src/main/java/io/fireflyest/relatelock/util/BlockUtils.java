@@ -7,6 +7,7 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.Directional;
 import org.bukkit.block.data.type.Chest;
 import org.bukkit.block.data.type.Door;
+import org.bukkit.block.data.type.TrapDoor;
 
 /**
  * 方块相关工具类
@@ -64,6 +65,21 @@ public final class BlockUtils {
                 case RIGHT -> block.getRelative(BlockUtils.leftFace(door.getFacing()));
                 default -> null;
             };
+        }
+        return another;
+    }
+
+    /**
+     * 获取另一扇活板门
+     * 
+     * @param block 活板门方块
+     * @return 另一扇活板门方块
+     */
+    @Nullable
+    public static Block anotherTrapDoor(@Nonnull Block block) {
+        Block another = null;
+        if (block.getBlockData() instanceof TrapDoor trapDoor) {
+            another = block.getRelative(trapDoor.getFacing());
         }
         return another;
     }

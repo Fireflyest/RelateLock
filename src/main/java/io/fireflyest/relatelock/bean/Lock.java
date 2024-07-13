@@ -13,13 +13,10 @@ public class Lock {
     // 拥有者uuid
     private String owner;
 
-    // 管理员uuid，管理员可增删共享和查看日志
-    private Set<String> manager;
-
     // 共享玩家uuid
     private Set<String> share;
 
-    // 日志格式为playerName-time
+    // 日志
     private Set<String> log;
     
     // 新建日期
@@ -50,7 +47,6 @@ public class Lock {
         this.outset = outset;
         this.type = type;
         this.data = data;
-        this.manager = new HashSet<>();
         this.share = new HashSet<>();
         this.log = new HashSet<>();
     }
@@ -61,14 +57,6 @@ public class Lock {
 
     public void setOwner(String owner) {
         this.owner = owner;
-    }
-
-    public Set<String> getManager() {
-        return manager;
-    }
-
-    public void setManager(Set<String> manager) {
-        this.manager = manager;
     }
 
     public Set<String> getShare() {

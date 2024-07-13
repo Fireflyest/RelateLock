@@ -5,10 +5,9 @@ import javax.annotation.Nullable;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.TileState;
-import org.bukkit.block.data.Bisected;
 import org.bukkit.block.data.Directional;
+import org.bukkit.block.data.Openable;
 import org.bukkit.block.data.type.Chest;
-import org.bukkit.block.data.type.Door;
 import io.fireflyest.relatelock.Print;
 import io.fireflyest.relatelock.util.BlockUtils;
 
@@ -63,13 +62,10 @@ public class BlockRelate extends Relate {
         if (block.getBlockData() instanceof Chest) { // 箱子
             Print.RELATE_LOCK.debug("BlockRelate.tryLock() -> chest");
             subRelate.add(new ChestRelate(null, block));
-        } else if (block.getBlockData() instanceof Door) { //门，可能是多个上下分方块
-            Print.RELATE_LOCK.debug("BlockRelate.tryLock() -> door");
-            subRelate.add(new DoorRelate(null, block));
-        } else if (block.getBlockData() instanceof Bisected) { // 上下分方块
-            Print.RELATE_LOCK.debug("BlockRelate.tryLock() -> bisected");
-            subRelate.add(new BisectedRelate(null, block));
-        } else if (block.getState() instanceof TileState) { // 其他可更新方块
+        } else if (block.getBlockData() instanceof Openable) { // 可开关方块
+            Print.RELATE_LOCK.debug("BlockRelate.tryLock() -> openable");
+            subRelate.add(new OpenableRelate(null, block));
+        } else if (block.getState() instanceof TileState) { // 实体方块
             Print.RELATE_LOCK.debug("BlockRelate.tryLock() -> tile");
             subRelate.add(new TileRelate(null, block));
         } else {

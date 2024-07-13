@@ -39,10 +39,7 @@ public final class RelateLock extends JavaPlugin {
                                          configFile.getString("LockSymbol"),
                                          configFile.getString("LockPasswordSymbol"),
                                          configFile.getString("LockFeeSymbol"),
-                                         configFile.getString("LockTokenSymbol"),
-                                         configFile.getString("ShareSymbol"),
-                                         configFile.getString("ManagerSymbol"),
-                                         configFile.getString("RemoveSymbol"));
+                                         configFile.getString("LockTokenSymbol"));
         
         if (config.debug()) {
             Print.RELATE_LOCK.onDebug();

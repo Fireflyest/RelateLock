@@ -29,7 +29,8 @@ public class LockLogsCommand extends SubCommand {
         if (sender instanceof Player player) {
             final Block block = player.getTargetBlockExact(5);
             Lock lock = null;
-            if (block != null && (lock = locksmith.getLock(block.getLocation())) != null) {
+            if (block != null && (lock = locksmith.getLock(block.getLocation())) != null
+                              && player.getUniqueId().toString().equals(lock.getOwner())) {
                 locksmith.trimLogs(lock);
                 final List<String> logList = new ArrayList<>(lock.getLog());
                 Collections.sort(logList);
