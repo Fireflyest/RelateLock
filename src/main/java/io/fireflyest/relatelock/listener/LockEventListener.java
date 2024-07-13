@@ -63,16 +63,18 @@ public class LockEventListener implements Listener {
 
         // 是否新锁
         Lock lock = null;
-        if (lines[0].equalsIgnoreCase(config.lockString())) {
-            lock = new Lock(uid, Instant.now().toEpochMilli(), "normal", null);
-        } else {
-            final String[] firstLine = StringUtils.split(lines[0], " ");
-            final String type = firstLine[0];
-            final String data = firstLine.length > 1 ? firstLine[1] : "123";
-            if (type.equalsIgnoreCase(config.lockPasswordString())
-                    || type.equalsIgnoreCase(config.lockFeeString())
-                    || type.equalsIgnoreCase(config.lockTokenString())) {
-                lock = new Lock(uid, Instant.now().toEpochMilli(), type, data);
+        if (StringUtils.isNotEmpty(lines[0])) {
+            if (lines[0].equalsIgnoreCase(config.lockString())) {
+                lock = new Lock(uid, Instant.now().toEpochMilli(), "normal", null);
+            } else {
+                final String[] firstLine = StringUtils.split(lines[0], " ");
+                final String type = firstLine[0];
+                final String data = firstLine.length > 1 ? firstLine[1] : "123";
+                if (type.equalsIgnoreCase(config.lockPasswordString())
+                        || type.equalsIgnoreCase(config.lockFeeString())
+                        || type.equalsIgnoreCase(config.lockTokenString())) {
+                    lock = new Lock(uid, Instant.now().toEpochMilli(), type, data);
+                }
             }
         }
 

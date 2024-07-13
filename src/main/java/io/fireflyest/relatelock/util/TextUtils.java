@@ -16,7 +16,7 @@ import com.google.gson.reflect.TypeToken;
  * @author Fireflyest
  * @since 1.0
  */
-public final class StrUtils {
+public final class TextUtils {
     
     private static final Gson gson = new Gson();
 
@@ -97,7 +97,7 @@ public final class StrUtils {
         String getVar(String key);
     }
 
-    private StrUtils() {
+    private TextUtils() {
         // 
     }
 

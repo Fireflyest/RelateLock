@@ -3,7 +3,7 @@ package io.fireflyest.relatelock.cache;
 import javax.annotation.Nonnull;
 import org.bukkit.Location;
 import io.fireflyest.relatelock.bean.Lock;
-import io.fireflyest.relatelock.util.StrUtils;
+import io.fireflyest.relatelock.util.TextUtils;
 import io.fireflyest.relatelock.util.YamlUtils;
 
 /**
@@ -20,22 +20,22 @@ public final class LockOrganism extends AbstractOrganism<Location, Lock> {
 
     @Override
     public Location deserializeKey(@Nonnull String keyStr) {
-        return YamlUtils.deserialize(StrUtils.base64Decode(keyStr), Location.class);
+        return YamlUtils.deserialize(TextUtils.base64Decode(keyStr), Location.class);
     }
 
     @Override
     public Lock deserializeValue(@Nonnull String valueStr) {
-        return StrUtils.jsonToObj(StrUtils.base64Decode(valueStr), Lock.class);
+        return TextUtils.jsonToObj(TextUtils.base64Decode(valueStr), Lock.class);
     }
 
     @Override
     public String serializeKey(@Nonnull Location key) {
-        return StrUtils.base64Encode(YamlUtils.serialize(key));
+        return TextUtils.base64Encode(YamlUtils.serialize(key));
     }
 
     @Override
     public String serializeValue(@Nonnull Lock value) {
-        return StrUtils.base64Encode(StrUtils.toJson(value));
+        return TextUtils.base64Encode(TextUtils.toJson(value));
     }
 
 }

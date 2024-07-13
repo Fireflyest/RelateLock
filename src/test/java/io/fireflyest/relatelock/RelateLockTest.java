@@ -11,7 +11,7 @@ import org.bukkit.Location;
 import org.bukkit.util.StringUtil;
 import org.junit.Test;
 
-import io.fireflyest.relatelock.util.StrUtils;
+import io.fireflyest.relatelock.util.TextUtils;
 import io.fireflyest.relatelock.util.YamlUtils;
 
 public class RelateLockTest {

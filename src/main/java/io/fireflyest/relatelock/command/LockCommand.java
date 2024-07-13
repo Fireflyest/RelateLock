@@ -1,21 +1,26 @@
 package io.fireflyest.relatelock.command;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nonnull;
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import io.fireflyest.relatelock.bean.Lock;
-import io.fireflyest.relatelock.core.api.Locksmith;
+import io.fireflyest.relatelock.core.LocksmithImpl;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.HoverEvent.Action;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Entity;
+import net.md_5.bungee.api.chat.hover.content.Text;
 
 /**
  * 锁指令
@@ -25,9 +30,9 @@ import net.md_5.bungee.api.chat.hover.content.Entity;
  */
 public class LockCommand extends ComplexCommand {
 
-    private final Locksmith locksmith;
+    private final LocksmithImpl locksmith;
 
-    public LockCommand(Locksmith locksmith) {
+    public LockCommand(LocksmithImpl locksmith) {
         this.locksmith = locksmith;
     }
 
@@ -37,13 +42,13 @@ public class LockCommand extends ComplexCommand {
             final Block block = player.getTargetBlockExact(5);
             Lock lock = null;
             if (block != null && (lock = locksmith.getLock(block.getLocation())) != null) {
-                player.spigot().sendMessage(this.sendPlayer("🔒", lock.getOwner()));
+                locksmith.trimLogs(lock);
+                player.spigot().sendMessage(this.anPlayer("🔒", lock.getOwner()));
                 player.spigot().sendMessage(this.listPlayers("管理:", lock.getManager()));
                 player.spigot().sendMessage(this.listPlayers("共享:", lock.getShare()));
-                player.sendMessage("记录: " + lock.getLog().size());
+                player.spigot().sendMessage(this.listLogs("记录:", lock.getLog()));
             }
         }
-
         return true;
     }
 
@@ -75,7 +80,7 @@ public class LockCommand extends ComplexCommand {
      * @param uid 玩家UUID
      * @return 玩家
      */
-    private BaseComponent[] sendPlayer(@Nonnull String title, @Nonnull String uid) {
+    private BaseComponent[] anPlayer(@Nonnull String title, @Nonnull String uid) {
         final ComponentBuilder componentBuilder = new ComponentBuilder();
         componentBuilder.append(title);
         final String playerName = this.getPlayerName(uid);
@@ -86,6 +91,30 @@ public class LockCommand extends ComplexCommand {
                         .append(playerName)
                         .bold(true)
                         .event(new HoverEvent(Action.SHOW_ENTITY, entity));
+        return componentBuilder.create();
+    }
+
+    /**
+     * 发送操作记录
+     * 
+     * @param title 开头
+     * @param logs 记录集合
+     * @return 记录
+     */
+    private BaseComponent[] listLogs(@Nonnull String title, @Nonnull Set<String> logs) {
+        final StringBuilder sBuilder = new StringBuilder();
+        final List<String> logList = new ArrayList<>(logs);
+        Collections.sort(logList);
+        for (String log : logList) {
+            sBuilder.append(log).append("\n");
+        }
+        final String logString = StringUtils.trim(sBuilder.toString());
+
+        final ComponentBuilder componentBuilder = new ComponentBuilder();
+        componentBuilder.append(title);
+        componentBuilder.append(" ")
+                        .append(String.valueOf(logs.size()))
+                        .event(new HoverEvent(Action.SHOW_TEXT, new Text(logString)));
         return componentBuilder.create();
     }
 

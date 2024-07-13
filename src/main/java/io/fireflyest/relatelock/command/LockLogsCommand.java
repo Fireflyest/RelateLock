@@ -1,5 +1,8 @@
 package io.fireflyest.relatelock.command;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import javax.annotation.Nonnull;
 import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
@@ -28,7 +31,9 @@ public class LockLogsCommand extends SubCommand {
             Lock lock = null;
             if (block != null && (lock = locksmith.getLock(block.getLocation())) != null) {
                 locksmith.trimLogs(lock);
-                for (String log : lock.getLog()) {
+                final List<String> logList = new ArrayList<>(lock.getLog());
+                Collections.sort(logList);
+                for (String log : logList) {
                     player.sendMessage(log);
                 }
             }

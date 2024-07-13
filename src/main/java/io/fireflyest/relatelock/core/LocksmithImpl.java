@@ -21,7 +21,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Dropper;
 import org.bukkit.block.TileState;
-import org.bukkit.block.data.Bisected;
+import org.bukkit.block.data.Openable;
 import org.bukkit.block.data.type.Chest;
 import org.bukkit.block.data.type.Door;
 import org.bukkit.block.data.type.WallSign;
@@ -122,12 +122,9 @@ public class LocksmithImpl implements Locksmith {
         if (attachBlock.getBlockData() instanceof Chest) { // 箱子
             Print.RELATE_LOCK.debug("LocksmithImpl.lock() -> chest");
             relate = new ChestRelate(signBlock, attachBlock);
-        } else if (attachBlock.getBlockData() instanceof Door) { //门，可能是多个上下分方块
-            Print.RELATE_LOCK.debug("LocksmithImpl.lock() -> door");
-            relate = new DoorRelate(signBlock, attachBlock);
-        } else if (attachBlock.getBlockData() instanceof Bisected) { // 上下分方块
-            Print.RELATE_LOCK.debug("LocksmithImpl.lock() -> bisected");
-            relate = new BisectedRelate(signBlock, attachBlock);
+        } else if (attachBlock.getBlockData() instanceof Openable) { //门，可能是多个上下分方块
+            Print.RELATE_LOCK.debug("LocksmithImpl.lock() -> openable");
+            relate = new OpenableRelate(signBlock, attachBlock);
         } else if (attachBlock.getState() instanceof TileState) { // 方块实体
             Print.RELATE_LOCK.debug("LocksmithImpl.lock() -> tile");
             relate = new TileRelate(signBlock, attachBlock);
@@ -355,17 +352,17 @@ public class LocksmithImpl implements Locksmith {
 
 
         final Block clickBlock = location.getBlock();
-        if (clickBlock.getBlockData() instanceof Door) { //门
+        if (clickBlock.getBlockData() instanceof Openable) { // 可开关
             Boolean isOpen = null;
             for (Location useLocation : locations) {
                 final Block block = useLocation.getBlock();
-                if (block.getBlockData() instanceof Door door) {
+                if (block.getBlockData() instanceof Openable openable) {
                     if (isOpen == null) {
-                        isOpen = !door.isOpen();
+                        isOpen = !openable.isOpen();
                     }
-                    door.setOpen(isOpen);
-                    block.setBlockData(door);
-                    Print.RELATE_LOCK.debug("LocksmithImpl.useLocation() -> door open:{}", isOpen);
+                    openable.setOpen(isOpen);
+                    block.setBlockData(openable);
+                    Print.RELATE_LOCK.debug("LocksmithImpl.useLocation() -> open:{}", isOpen);
                 }
             }
         }
