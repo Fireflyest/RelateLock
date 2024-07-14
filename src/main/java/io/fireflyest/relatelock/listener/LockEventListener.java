@@ -35,7 +35,7 @@ import net.md_5.bungee.api.chat.ComponentBuilder;
 public class LockEventListener implements Listener {
 
     private final Lock cooldownLock = new Lock();
-    private final LockOrganism lockOrganism = new LockOrganism("cooldown");
+    private final LockOrganism lockOrganism = new LockOrganism("cooldown", true);
 
     private final Locksmith locksmith;
     private final Config config;

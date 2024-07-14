@@ -18,6 +18,10 @@ public final class LockOrganism extends AbstractOrganism<Location, Lock> {
         super(name);
     }
 
+    public LockOrganism(String name, boolean concurrent) {
+        super(name, concurrent);
+    }
+
     @Override
     public Location deserializeKey(@Nonnull String keyStr) {
         return YamlUtils.deserialize(TextUtils.base64Decode(keyStr), Location.class);
