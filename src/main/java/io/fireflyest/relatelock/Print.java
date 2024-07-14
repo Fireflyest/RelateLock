@@ -13,13 +13,10 @@ public enum Print {
     RELATE_LOCK("RelateLock");
 
     private static final String COLOR_RESET = "\033[0m";
-    private static final String COLOR_BLACK = "\033[30m";
     private static final String COLOR_RED = "\033[31m";
     private static final String COLOR_GREEN = "\033[32m";
     private static final String COLOR_YELLOW = "\033[33m";
     private static final String COLOR_BLUE = "\033[34m";
-    private static final String COLOR_PURPLE = "\033[35m";
-    private static final String COLOR_CYAN = "\033[36m";
 
     private static final String BACKGROUND_RED = "\033[41m";
 
@@ -34,10 +31,15 @@ public enum Print {
     }
 
     public void catching(Throwable throwable) {
-        // TODO: 
         logger.catching(throwable);
     }
 
+    /**
+     * 打印调试日志
+     * 
+     * @param message 消息
+     * @param params 参数
+     */
     public void debug(String message, Object... params) {
         if (debug) {
             message = "[" + COLOR_BLUE + title + COLOR_RESET + "] " + message;

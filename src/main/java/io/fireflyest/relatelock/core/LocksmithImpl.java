@@ -371,7 +371,7 @@ public class LocksmithImpl implements Locksmith {
         if (lock.getType().equals(config.lockString())) {
             access = lock.getShare().contains(uid);
         } else if (lock.getType().equals(config.lockPasswordString())) {
-            // TODO: 
+            // 
         } else if (lock.getType().equals(config.lockFeeString())) {
             if (confirmOrg.exist(player)) {
                 final Economy economy = RelateLock.getPlugin().getEconomy();
