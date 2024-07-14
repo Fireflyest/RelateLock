@@ -12,15 +12,20 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import io.fireflyest.relatelock.bean.Lock;
+import io.fireflyest.relatelock.config.Config;
 import io.fireflyest.relatelock.core.LocksmithImpl;
+import io.fireflyest.relatelock.util.YamlUtils;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.HoverEvent.Action;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.TranslatableComponent;
 import net.md_5.bungee.api.chat.hover.content.Entity;
+import net.md_5.bungee.api.chat.hover.content.Item;
 import net.md_5.bungee.api.chat.hover.content.Text;
 
 /**
@@ -32,9 +37,11 @@ import net.md_5.bungee.api.chat.hover.content.Text;
 public class LockCommand extends ComplexCommand {
 
     private final LocksmithImpl locksmith;
+    private final Config config;
 
-    public LockCommand(@Nonnull LocksmithImpl locksmith) {
+    public LockCommand(@Nonnull LocksmithImpl locksmith, @Nonnull Config config) {
         this.locksmith = locksmith;
+        this.config = config;
     }
 
     @Override
@@ -45,7 +52,7 @@ public class LockCommand extends ComplexCommand {
             if (block != null && (lock = locksmith.getLock(block.getLocation())) != null) {
                 locksmith.trimLogs(lock);
                 player.spigot().sendMessage(this.anPlayer("🔒", lock.getOwner()));
-                player.sendMessage("类型: " + lock.getType());
+                player.spigot().sendMessage(this.type("类型:", lock.getType(), lock.getData()));
                 player.spigot().sendMessage(this.listPlayers("共享:", lock.getShare()));
                 if (player.getUniqueId().toString().equals(lock.getOwner())) {
                     player.spigot().sendMessage(this.listLogs("记录:", lock.getLog()));
@@ -95,6 +102,40 @@ public class LockCommand extends ComplexCommand {
                         .append(playerName)
                         .bold(true)
                         .event(new HoverEvent(Action.SHOW_ENTITY, entity));
+        return componentBuilder.create();
+    }
+
+    /**
+     * 发送类型
+     * 
+     * @param title 开头
+     * @param type 类型
+     * @param data 类型数据
+     * @return 类型
+     */
+    private BaseComponent[] type(@Nonnull String title, 
+                                 @Nonnull String type, 
+                                 @Nonnull String data) {
+        
+        final ComponentBuilder componentBuilder = new ComponentBuilder();
+        componentBuilder.append(title).append(" ");
+        if (type.equals(config.lockString())) {
+            componentBuilder.append("普通锁 ");
+        } else if (type.equals(config.lockPasswordString())) {
+            componentBuilder.append("密码锁 ")
+                            .append("[")
+                            .append("#".repeat(data.length()))
+                            .append("]");
+        } else if (type.equals(config.lockFeeString())) {
+            componentBuilder.append("付费锁 ").append(data);
+        } else if (type.equals(config.lockTokenString()) && data.startsWith(YamlUtils.DATA_PATH)) {
+            final ItemStack token = YamlUtils.deserializeItemStack(data);
+            final String material = token.getType().name().toLowerCase();
+            final Item item = new Item("minecraft:" + material, token.getAmount(), null);
+            componentBuilder.append("代币锁 ")
+                            .append(new TranslatableComponent("item.minecraft." + material))
+                            .event(new HoverEvent(HoverEvent.Action.SHOW_ITEM, item));
+        }
         return componentBuilder.create();
     }
 

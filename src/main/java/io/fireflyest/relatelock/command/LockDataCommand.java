@@ -5,6 +5,7 @@ import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import io.fireflyest.relatelock.bean.Lock;
+import io.fireflyest.relatelock.config.Config;
 import io.fireflyest.relatelock.core.api.Locksmith;
 import io.fireflyest.relatelock.util.YamlUtils;
 
@@ -16,9 +17,11 @@ import io.fireflyest.relatelock.util.YamlUtils;
 public class LockDataCommand extends SubCommand {
 
     private final Locksmith locksmith;
+    private final Config config;
 
-    public LockDataCommand(Locksmith locksmith) {
+    public LockDataCommand(@Nonnull Locksmith locksmith, @Nonnull Config config) {
         this.locksmith = locksmith;
+        this.config = config;
     }
 
     @Override
@@ -26,7 +29,9 @@ public class LockDataCommand extends SubCommand {
         if (sender instanceof Player player) {
             final Block block = player.getTargetBlockExact(5);
             Lock lock = null;
-            if (block != null && (lock = locksmith.getLock(block.getLocation())) != null) {
+            if (block != null && (lock = locksmith.getLock(block.getLocation())) != null
+                              && lock.getOwner().equals(player.getUniqueId().toString())
+                              && lock.getType().equals(config.lockTokenString())) {
                 final String data = YamlUtils.serialize(player.getInventory().getItemInMainHand());
                 lock.setData(data);
             }
@@ -39,7 +44,8 @@ public class LockDataCommand extends SubCommand {
         if (sender instanceof Player player) {
             final Block block = player.getTargetBlockExact(5);
             Lock lock = null;
-            if (block != null && (lock = locksmith.getLock(block.getLocation())) != null) {
+            if (block != null && (lock = locksmith.getLock(block.getLocation())) != null
+                              && lock.getOwner().equals(player.getUniqueId().toString())) {
                 lock.setData(arg1);
             }
         }

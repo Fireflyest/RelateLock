@@ -28,15 +28,21 @@ import org.bukkit.block.data.type.Door;
 import org.bukkit.block.data.type.TrapDoor;
 import org.bukkit.block.data.type.WallSign;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.NumberConversions;
 import com.google.common.base.Objects;
 import io.fireflyest.relatelock.Print;
+import io.fireflyest.relatelock.RelateLock;
 import io.fireflyest.relatelock.bean.Lock;
+import io.fireflyest.relatelock.cache.ConfirmOrganism;
 import io.fireflyest.relatelock.cache.LocationOrganism;
 import io.fireflyest.relatelock.cache.LockOrganism;
 import io.fireflyest.relatelock.config.Config;
 import io.fireflyest.relatelock.core.api.Locksmith;
 import io.fireflyest.relatelock.util.BlockUtils;
+import io.fireflyest.relatelock.util.YamlUtils;
+import net.milkbowl.vault.economy.Economy;
 
 /**
  * 锁匠实现类
@@ -69,6 +75,11 @@ public class LocksmithImpl implements Locksmith {
      * 牌子的位置对应的一个锁
      */
     private final LockOrganism lockOrg = new LockOrganism("lock");
+
+    /**
+     * 玩家开锁确认
+     */
+    private final ConfirmOrganism confirmOrg = new ConfirmOrganism("confirm");
 
     public LocksmithImpl(@Nonnull Config config) {
         this.config = config;
@@ -208,8 +219,7 @@ public class LocksmithImpl implements Locksmith {
                 this.addLog(lock, name, "E", access, desc);
             } else { // 其他方块
                 boolean canUse = false;
-                access = Objects.equal(lock.getOwner(), uid)
-                                    || lock.getShare().contains(uid);
+                access = lock.getOwner().equals(uid) || this.useAccess(player, lock);
                 desc = location.getBlock().getType().name().toLowerCase();
                 if (access) {
                     canUse = this.useLocation(location);
@@ -346,6 +356,46 @@ public class LocksmithImpl implements Locksmith {
             lock = lockOrg.get(location);
         }
         return lock;
+    }
+
+    /**
+     * 玩家使用上锁物品
+     * 
+     * @param player 玩家
+     * @param lock 锁
+     * @return 是否允许
+     */
+    private boolean useAccess(@Nonnull Player player, @Nonnull Lock lock) {
+        final String uid = player.getUniqueId().toString();
+        boolean access = false;
+        if (lock.getType().equals(config.lockString())) {
+            access = lock.getShare().contains(uid);
+        } else if (lock.getType().equals(config.lockPasswordString())) {
+            // TODO: 
+        } else if (lock.getType().equals(config.lockFeeString())) {
+            if (confirmOrg.exist(player)) {
+                final Economy economy = RelateLock.getPlugin().getEconomy();
+                final double fee = NumberConversions.toDouble(lock.getData());
+                if (economy.has(player, fee)) {
+                    economy.withdrawPlayer(player, fee);
+                    economy.depositPlayer(this.getOfflinePlayer(uid), fee);
+                    access = true;
+                    player.performCommand("money");
+                }
+            } else {
+                confirmOrg.setex(player, 1000 * 10, "fee");
+                player.sendMessage("🔒 已被上锁，十秒内再次右键花费" + lock.getData() + "即可使用");
+            }
+        } else if (lock.getType().equals(config.lockTokenString())
+                && lock.getData().startsWith(YamlUtils.DATA_PATH)) {
+            final ItemStack hand = player.getInventory().getItemInMainHand();
+            final ItemStack token = YamlUtils.deserializeItemStack(lock.getData());
+            if (hand.isSimilar(token) && hand.getAmount() >= token.getAmount()) {
+                hand.setAmount(hand.getAmount() - token.getAmount());
+                access = true;
+            }
+        }
+        return access;
     }
 
     /**

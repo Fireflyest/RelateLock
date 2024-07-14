@@ -1,6 +1,8 @@
 package io.fireflyest.relatelock;
 
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import io.fireflyest.relatelock.command.LockBackupCommand;
@@ -12,6 +14,7 @@ import io.fireflyest.relatelock.core.LocksmithImpl;
 import io.fireflyest.relatelock.core.api.Locksmith;
 import io.fireflyest.relatelock.listener.LockEventListener;
 import io.fireflyest.relatelock.util.YamlUtils;
+import net.milkbowl.vault.economy.Economy;
 
 /**
  * 关联锁插件
@@ -22,6 +25,7 @@ import io.fireflyest.relatelock.util.YamlUtils;
 public final class RelateLock extends JavaPlugin {
 
     private LocksmithImpl locksmith;
+    private Economy economy;
 
     public RelateLock() {
         //
@@ -53,8 +57,8 @@ public final class RelateLock extends JavaPlugin {
         this.getServer().getServicesManager()
             .register(Locksmith.class, locksmith, this, ServicePriority.Normal);
 
-        new LockCommand(locksmith)
-            .addSub(new LockDataCommand(locksmith))
+        new LockCommand(locksmith, config)
+            .addSub(new LockDataCommand(locksmith, config))
             .addSub(new LockBackupCommand(locksmith).async())
             .addSub(new LockLogsCommand(locksmith))
             .apply(this);
@@ -70,6 +74,25 @@ public final class RelateLock extends JavaPlugin {
         this.locksmith.save(this, null);
         // close data service
         
+    }
+
+    /**
+     * 获取经济支持
+     * 
+     * @return 经济
+     */
+    public Economy getEconomy() {
+        if (economy == null) {
+            final RegisteredServiceProvider<Economy> rsp = Bukkit.getServer()
+                                                                 .getServicesManager()
+                                                                 .getRegistration(Economy.class);
+            if (rsp == null) {
+                Print.RELATE_LOCK.warn("Economy not found!");
+                return null;
+            }
+            economy = rsp.getProvider();
+        }
+        return economy;
     }
 
 }

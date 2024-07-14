@@ -1,7 +1,10 @@
 name: RelateLock
 version: '${project.version}'
 main: io.fireflyest.relatelock.RelateLock
+description: 牌子锁
 api-version: '1.18'
+authors: [Fireflyest]
+softdepend: [Vault]
 
 commands:
   lock:
