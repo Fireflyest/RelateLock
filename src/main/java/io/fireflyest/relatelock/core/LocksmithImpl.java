@@ -62,6 +62,11 @@ public class LocksmithImpl implements Locksmith {
     public static final String DESC_MAIN_SIGN = "main_sign";
 
     /**
+     * 存储玩家的UUID
+     */
+    private final Map<String, UUID> uuidMap = new HashMap<>();
+
+    /**
      * 所有上锁的位置
      */
     private final Map<Chunk, Set<Location>> locationMap = new HashMap<>();
@@ -93,12 +98,17 @@ public class LocksmithImpl implements Locksmith {
         if (entry == null) {
             entry = "latest";
         }
-        this.locationOrg.load(plugin, entry);
-        this.lockOrg.load(plugin, entry);
+        this.locationOrg.load(plugin, entry, true);
+        this.lockOrg.load(plugin, entry, true);
         // 方块上锁
         for (Location location : this.locationOrg.keySet()) {
             final Chunk chunk = location.getChunk();
             locationMap.computeIfAbsent(chunk, k -> new HashSet<>()).add(location);
+        }
+        // 玩家UUID
+        uuidMap.clear();
+        for (OfflinePlayer offlinePlayer : Bukkit.getOfflinePlayers()) {
+            uuidMap.put(offlinePlayer.getName(), offlinePlayer.getUniqueId());
         }
     }
 
@@ -669,9 +679,15 @@ public class LocksmithImpl implements Locksmith {
         OfflinePlayer player = Bukkit.getPlayerExact(playerName);
         // 如果玩家离线
         if (player == null) {
-            for (OfflinePlayer offlinePlayer : Bukkit.getOfflinePlayers()) {
-                if (playerName.equals(offlinePlayer.getName())) {
-                    player = offlinePlayer;
+            if (uuidMap.containsKey(playerName)) { // 缓存中查找
+                player = Bukkit.getOfflinePlayer(uuidMap.get(playerName));
+            } else { // 遍历查找
+                for (OfflinePlayer offlinePlayer : Bukkit.getOfflinePlayers()) {
+                    if (playerName.equals(offlinePlayer.getName())) {
+                        uuidMap.put(playerName, offlinePlayer.getUniqueId());
+                        player = offlinePlayer;
+                        break;
+                    }
                 }
             }
         }
