@@ -31,6 +31,7 @@ import org.bukkit.block.data.type.WallSign;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.NumberConversions;
 import com.google.common.base.Objects;
 import io.fireflyest.relatelock.Print;
@@ -254,30 +255,22 @@ public class LocksmithImpl implements Locksmith {
         }
         if (locationOrg.scard(location) == 1) { // 关联方块
             final Location signLocation = locationOrg.get(location);
-            final boolean destroyMainSign;
             Validate.notNull(signLocation, EMPTY_SIGN_LOC);
+            access = Objects.equal(lock.getOwner(), uid);
             if (location.getBlock().getBlockData() instanceof WallSign) { // 牌子
-                access = Objects.equal(lock.getOwner(), uid);
-                destroyMainSign = false;
                 desc = DESC_SIGN;
-            } else { // 其他方块
-                // TODO: 重新建立关联
-                access = Objects.equal(lock.getOwner(), uid) && locationOrg.scard(signLocation) < 3;
-                destroyMainSign = true;
-                desc = location.getBlock().getType().name().toLowerCase();
-            }
-
-            this.addLog(lock, name, "D", access, desc);
-            
-            if (access) {
-                if (destroyMainSign) { // 方块连同牌子一起破坏
-                    this.unlock(signLocation);
-                    lockOrg.del(signLocation);
-                } else { // 破坏牌子
+                this.addLog(lock, name, "D", access, desc);
+                if (access) {
                     this.destroySign(lock, location);
                     this.unlockLocation(location, signLocation);
                 }
-            }   
+            } else { // 其他方块
+                desc = location.getBlock().getType().name().toLowerCase();
+                this.addLog(lock, name, "D", access, desc);
+                if (access) {
+                    this.relock(signLocation, lock);
+                }
+            }
         } else if (locationOrg.scard(location) > 1) { // 主牌子
             // 判断是否有权限
             access = Objects.equal(lock.getOwner(), uid);
@@ -372,6 +365,42 @@ public class LocksmithImpl implements Locksmith {
     }
 
     /**
+     * 重新上锁
+     * 
+     * @param signLocation 牌子位置
+     * @param lock 锁
+     */
+    private void relock(@Nonnull Location signLocation, @Nonnull Lock lock) {
+        Print.RELATE_LOCK.debug("LocksmithImpl.relock()");
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                // 取牌子
+                final Set<Block> signBlocks = new HashSet<>();
+                final Set<Location> locations = locationOrg.smembers(signLocation);
+                Validate.notNull(locations, EMPTY_LOCK_LOCS);
+                for (Location relateLocation : locations) {
+                    if (signLocation.equals(relateLocation)) {
+                        continue;
+                    }
+                    final Block block = relateLocation.getBlock();
+                    if (block.getBlockData() instanceof WallSign) {
+                        signBlocks.add(block);
+                    }
+                }
+                // 解锁
+                unlock(signLocation);
+                // 重新上锁
+                lock(signLocation.getBlock(), lock);
+                // 其他牌子
+                for (Block signBlock : signBlocks) {
+                    placeSign(signBlock, lock.getOwner());
+                }
+            }
+        }.runTask(RelateLock.getPlugin());
+    }
+
+    /**
      * 玩家使用上锁物品
      * 
      * @param player 玩家
@@ -453,7 +482,6 @@ public class LocksmithImpl implements Locksmith {
         if (locations == null) {
             return canUse;
         }
-
 
         final Block clickBlock = location.getBlock();
         if (clickBlock.getBlockData() instanceof Chest) { // 箱子

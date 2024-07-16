@@ -22,7 +22,9 @@ public class TileRelate extends Relate {
     public void traceRelateBlocks() {
         if (attachBlock.getState() instanceof Container) { // 容器
             Print.RELATE_LOCK.debug("[{}]TileRelate.traceRelateBlocks() -> container", deep);
-            subRelate.add(new ContainerRelate(null, attachBlock, this.deep + 1));                
+            subRelate.add(
+                new ContainerRelate(null, attachBlock, this.deep + 1, true)
+            );                
         } else if (attachBlock.getState().getBlockData() instanceof Bed) { // 床
             Print.RELATE_LOCK.debug("[{}]TileRelate.traceRelateBlocks() -> bed", deep);
             subRelate.add(new BedRelate(null, attachBlock, this.deep + 1));

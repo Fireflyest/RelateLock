@@ -26,6 +26,7 @@ public abstract class Relate {
      * 方块关联实例化
      * @param signBlock 牌子方块
      * @param attachBlock 被贴的方块
+     * @param deep 关联深度
      */
     protected Relate(@Nullable Block signBlock, @Nonnull Block attachBlock, int deep) {
         this.signBlock = signBlock;

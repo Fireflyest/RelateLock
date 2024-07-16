@@ -108,7 +108,7 @@ public class LockEventListener implements Listener {
         }
 
         // 防止操作门的时候使用手上物品
-        if (block.getBlockData() instanceof Openable) {
+        if (block.getBlockData() instanceof Openable && !event.getPlayer().isSneaking()) {
             event.setUseItemInHand(Result.DENY);
         }
 
