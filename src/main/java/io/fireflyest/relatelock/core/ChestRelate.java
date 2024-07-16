@@ -22,14 +22,14 @@ public class ChestRelate extends Relate {
     public void traceRelateBlocks() {
         if (attachBlock.getBlockData() instanceof Chest) {
             // 自己
-            Print.RELATE_LOCK.debug("ChestRelate.traceRelateBlocks() -> chest");
+            Print.RELATE_LOCK.debug("[{}]ChestRelate.traceRelateBlocks() -> chest", deep);
             subRelate.add(new ContainerRelate(null, attachBlock, this.deep + 1));
         }
 
         // 另一半
         final Block anotherChest = BlockUtils.anotherChest(attachBlock);
         if (anotherChest != null && anotherChest.getBlockData() instanceof Chest) {
-            Print.RELATE_LOCK.debug("ChestRelate.traceRelateBlocks() -> chest");
+            Print.RELATE_LOCK.debug("[{}]ChestRelate.traceRelateBlocks() -> chest", deep);
             subRelate.add(new ContainerRelate(null, anotherChest, this.deep + 1));
         }
     }

@@ -22,14 +22,14 @@ public class DoorRelate extends Relate {
     public void traceRelateBlocks() {
         if (attachBlock.getBlockData() instanceof Door) {
             // 自己
-            Print.RELATE_LOCK.debug("DoorRelate.traceRelateBlocks() -> bisected");
+            Print.RELATE_LOCK.debug("[{}]DoorRelate.traceRelateBlocks() -> bisected", deep);
             subRelate.add(new BisectedRelate(null, attachBlock, this.deep + 1));
         }
 
         // 另一扇门
         final Block anotherDoor = BlockUtils.anotherDoor(attachBlock);
         if (anotherDoor != null && anotherDoor.getBlockData() instanceof Door) {
-            Print.RELATE_LOCK.debug("DoorRelate.traceRelateBlocks() -> bisected");
+            Print.RELATE_LOCK.debug("[{}]DoorRelate.traceRelateBlocks() -> bisected", deep);
             subRelate.add(new BisectedRelate(null, anotherDoor, this.deep + 1));
         }
     }

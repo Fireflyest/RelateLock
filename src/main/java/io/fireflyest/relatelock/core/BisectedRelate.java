@@ -22,7 +22,7 @@ public class BisectedRelate extends Relate {
     public void traceRelateBlocks() {
         if (attachBlock.getBlockData() instanceof Bisected bisected) {
             // 自己
-            Print.RELATE_LOCK.debug("BisectedRelate.traceRelateBlocks() -> half");
+            Print.RELATE_LOCK.debug("[{}]BisectedRelate.traceRelateBlocks() -> half", deep);
             relateBlocks.add(attachBlock);
 
             // 另一部分，和基座
@@ -45,13 +45,13 @@ public class BisectedRelate extends Relate {
 
             // 另一半
             if (anotherPart != null && anotherPart.getBlockData() instanceof Bisected) {
-                Print.RELATE_LOCK.debug("BisectedRelate.traceRelateBlocks() -> half");
+                Print.RELATE_LOCK.debug("[{}]BisectedRelate.traceRelateBlocks() -> half", deep);
                 relateBlocks.add(anotherPart);
             }
             // 保护基座防止门被简介破坏
             if (baseBlock != null) {
                 relateBlocks.add(baseBlock);
-                Print.RELATE_LOCK.debug("BisectedRelate.traceRelateBlocks() -> base");
+                Print.RELATE_LOCK.debug("[{}]BisectedRelate.traceRelateBlocks() -> base", deep);
             }
         }
     }

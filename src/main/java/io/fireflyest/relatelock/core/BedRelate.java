@@ -21,7 +21,7 @@ public class BedRelate extends Relate {
     public void traceRelateBlocks() {
         if (attachBlock.getState().getBlockData() instanceof Bed bed) {
             // 自己
-            Print.RELATE_LOCK.debug("BedRelate.traceRelateBlocks() -> half");
+            Print.RELATE_LOCK.debug("[{}]BedRelate.traceRelateBlocks() -> half", deep);
             relateBlocks.add(attachBlock);
 
             // 另一部分，床头是朝向
@@ -31,7 +31,7 @@ public class BedRelate extends Relate {
                 default -> null;
             };
             if (otherPart != null && otherPart.getState().getBlockData() instanceof Bed) {
-                Print.RELATE_LOCK.debug("BedRelate.traceRelateBlocks() -> half");
+                Print.RELATE_LOCK.debug("[{}]BedRelate.traceRelateBlocks() -> half", deep);
                 relateBlocks.add(otherPart);
             }
         }

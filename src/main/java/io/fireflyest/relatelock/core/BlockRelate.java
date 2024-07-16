@@ -60,13 +60,13 @@ public class BlockRelate extends Relate {
     private boolean tryLock(@Nonnull Block block) {
         boolean lockable = true;
         if (block.getBlockData() instanceof Chest) { // 箱子
-            Print.RELATE_LOCK.debug("BlockRelate.tryLock() -> chest");
+            Print.RELATE_LOCK.debug("[{}]BlockRelate.tryLock() -> chest", deep);
             subRelate.add(new ChestRelate(null, block, this.deep + 1));
         } else if (block.getBlockData() instanceof Openable) { // 可开关方块
-            Print.RELATE_LOCK.debug("BlockRelate.tryLock() -> openable");
+            Print.RELATE_LOCK.debug("[{}]BlockRelate.tryLock() -> openable", deep);
             subRelate.add(new OpenableRelate(null, block, this.deep + 1));
         } else if (block.getState() instanceof TileState) { // 实体方块
-            Print.RELATE_LOCK.debug("BlockRelate.tryLock() -> tile");
+            Print.RELATE_LOCK.debug("[{}]BlockRelate.tryLock() -> tile", deep);
             subRelate.add(new TileRelate(null, block, this.deep + 1));
         } else {
             lockable = false;

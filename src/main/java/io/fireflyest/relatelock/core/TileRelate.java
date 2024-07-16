@@ -21,13 +21,13 @@ public class TileRelate extends Relate {
     @Override
     public void traceRelateBlocks() {
         if (attachBlock.getState() instanceof Container) { // 容器
-            Print.RELATE_LOCK.debug("TileRelate.traceRelateBlocks() -> container");
+            Print.RELATE_LOCK.debug("[{}]TileRelate.traceRelateBlocks() -> container", deep);
             subRelate.add(new ContainerRelate(null, attachBlock, this.deep + 1));                
         } else if (attachBlock.getState().getBlockData() instanceof Bed) { // 床
-            Print.RELATE_LOCK.debug("TileRelate.traceRelateBlocks() -> bed");
+            Print.RELATE_LOCK.debug("[{}]TileRelate.traceRelateBlocks() -> bed", deep);
             subRelate.add(new BedRelate(null, attachBlock, this.deep + 1));
         } else { // 其他
-            Print.RELATE_LOCK.debug("TileRelate.traceRelateBlocks() -> other");
+            Print.RELATE_LOCK.debug("[{}]TileRelate.traceRelateBlocks() -> tile", deep);
             relateBlocks.add(attachBlock);
         }
     }

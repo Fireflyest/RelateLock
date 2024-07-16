@@ -22,13 +22,13 @@ public class OpenableRelate extends Relate {
     @Override
     public void traceRelateBlocks() {
         if (attachBlock.getBlockData() instanceof Door) {
-            Print.RELATE_LOCK.debug("OpenableRelate.traceRelateBlocks() -> door");
+            Print.RELATE_LOCK.debug("[{}]OpenableRelate.traceRelateBlocks() -> door", deep);
             subRelate.add(new DoorRelate(null, attachBlock, this.deep + 1));
         } else if (attachBlock.getBlockData() instanceof TrapDoor) {
-            Print.RELATE_LOCK.debug("OpenableRelate.traceRelateBlocks() -> trap door");
+            Print.RELATE_LOCK.debug("[{}]OpenableRelate.traceRelateBlocks() -> trap door", deep);
             subRelate.add(new TrapDoorRelate(null, attachBlock, this.deep + 1));
         } else {
-            Print.RELATE_LOCK.debug("OpenableRelate.traceRelateBlocks() -> openable");
+            Print.RELATE_LOCK.debug("[{}]OpenableRelate.traceRelateBlocks() -> openable", deep);
             relateBlocks.add(attachBlock);
         }
     }

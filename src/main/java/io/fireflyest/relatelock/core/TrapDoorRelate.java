@@ -22,14 +22,14 @@ public class TrapDoorRelate extends Relate {
     public void traceRelateBlocks() {
         if (attachBlock.getBlockData() instanceof TrapDoor) {
             // 自己
-            Print.RELATE_LOCK.debug("TrapDoorRelate.traceRelateBlocks() -> half");
+            Print.RELATE_LOCK.debug("[{}]TrapDoorRelate.traceRelateBlocks() -> half", deep);
             relateBlocks.add(attachBlock);
         }
 
         // 另一扇门
         final Block anotherDoor = BlockUtils.anotherTrapDoor(attachBlock);
         if (anotherDoor != null && anotherDoor.getBlockData() instanceof TrapDoor) {
-            Print.RELATE_LOCK.debug("TrapDoorRelate.traceRelateBlocks() -> half");
+            Print.RELATE_LOCK.debug("[{}]TrapDoorRelate.traceRelateBlocks() -> half", deep);
             relateBlocks.add(anotherDoor);
         }
     }
