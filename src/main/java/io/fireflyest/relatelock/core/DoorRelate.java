@@ -14,8 +14,8 @@ import io.fireflyest.relatelock.util.BlockUtils;
  */
 public class DoorRelate extends Relate {
 
-    protected DoorRelate(@Nullable Block signBlock, @Nonnull Block attachBlock) {
-        super(signBlock, attachBlock);
+    protected DoorRelate(@Nullable Block signBlock, @Nonnull Block attachBlock, int deep) {
+        super(signBlock, attachBlock, deep);
     }
 
     @Override
@@ -23,14 +23,14 @@ public class DoorRelate extends Relate {
         if (attachBlock.getBlockData() instanceof Door) {
             // 自己
             Print.RELATE_LOCK.debug("DoorRelate.traceRelateBlocks() -> bisected");
-            subRelate.add(new BisectedRelate(null, attachBlock));
+            subRelate.add(new BisectedRelate(null, attachBlock, this.deep + 1));
         }
 
         // 另一扇门
         final Block anotherDoor = BlockUtils.anotherDoor(attachBlock);
         if (anotherDoor != null && anotherDoor.getBlockData() instanceof Door) {
             Print.RELATE_LOCK.debug("DoorRelate.traceRelateBlocks() -> bisected");
-            subRelate.add(new BisectedRelate(null, anotherDoor));
+            subRelate.add(new BisectedRelate(null, anotherDoor, this.deep + 1));
         }
     }
 

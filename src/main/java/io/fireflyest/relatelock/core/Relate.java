@@ -13,6 +13,8 @@ import org.bukkit.block.Block;
  */
 public abstract class Relate {
     
+    protected final int deep;
+
     protected final Block signBlock;
     protected final Block attachBlock;
     protected final Set<Block> relateBlocks = new HashSet<>();
@@ -25,9 +27,10 @@ public abstract class Relate {
      * @param signBlock 牌子方块
      * @param attachBlock 被贴的方块
      */
-    protected Relate(@Nullable Block signBlock, @Nonnull Block attachBlock) {
+    protected Relate(@Nullable Block signBlock, @Nonnull Block attachBlock, int deep) {
         this.signBlock = signBlock;
         this.attachBlock = attachBlock;
+        this.deep = deep;
     }
 
     /**

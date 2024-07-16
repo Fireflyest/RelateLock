@@ -14,18 +14,18 @@ import io.fireflyest.relatelock.Print;
  */
 public class TileRelate extends Relate {
 
-    protected TileRelate(@Nullable Block signBlock, @Nonnull Block attachBlock) {
-        super(signBlock, attachBlock);
+    protected TileRelate(@Nullable Block signBlock, @Nonnull Block attachBlock, int deep) {
+        super(signBlock, attachBlock, deep);
     }
 
     @Override
     public void traceRelateBlocks() {
         if (attachBlock.getState() instanceof Container) { // 容器
             Print.RELATE_LOCK.debug("TileRelate.traceRelateBlocks() -> container");
-            subRelate.add(new ContainerRelate(null, attachBlock));                
+            subRelate.add(new ContainerRelate(null, attachBlock, this.deep + 1));                
         } else if (attachBlock.getState().getBlockData() instanceof Bed) { // 床
             Print.RELATE_LOCK.debug("TileRelate.traceRelateBlocks() -> bed");
-            subRelate.add(new BedRelate(null, attachBlock));
+            subRelate.add(new BedRelate(null, attachBlock, this.deep + 1));
         } else { // 其他
             Print.RELATE_LOCK.debug("TileRelate.traceRelateBlocks() -> other");
             relateBlocks.add(attachBlock);

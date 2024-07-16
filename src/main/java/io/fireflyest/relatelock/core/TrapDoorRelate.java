@@ -14,8 +14,8 @@ import io.fireflyest.relatelock.util.BlockUtils;
  */
 public class TrapDoorRelate extends Relate {
 
-    protected TrapDoorRelate(@Nullable Block signBlock, @Nonnull Block attachBlock) {
-        super(signBlock, attachBlock);
+    protected TrapDoorRelate(@Nullable Block signBlock, @Nonnull Block attachBlock, int deep) {
+        super(signBlock, attachBlock, deep);
     }
 
     @Override

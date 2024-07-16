@@ -13,8 +13,8 @@ import io.fireflyest.relatelock.Print;
  */
 public class BedRelate extends Relate {
 
-    protected BedRelate(@Nullable Block signBlock, @Nonnull Block attachBlock) {
-        super(signBlock, attachBlock);
+    protected BedRelate(@Nullable Block signBlock, @Nonnull Block attachBlock, int deep) {
+        super(signBlock, attachBlock, deep);
     }
 
     @Override

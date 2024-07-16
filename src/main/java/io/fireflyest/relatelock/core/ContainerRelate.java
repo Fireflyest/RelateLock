@@ -12,8 +12,8 @@ import org.bukkit.block.Container;
  */
 public class ContainerRelate extends Relate {
 
-    protected ContainerRelate(@Nullable Block signBlock, @Nonnull Block attachBlock) {
-        super(signBlock, attachBlock);
+    protected ContainerRelate(@Nullable Block signBlock, @Nonnull Block attachBlock, int deep) {
+        super(signBlock, attachBlock, deep);
     }
 
     @Override

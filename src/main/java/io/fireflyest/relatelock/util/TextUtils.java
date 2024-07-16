@@ -102,6 +102,20 @@ public final class TextUtils {
     }
 
     /**
+     * 匹配文本
+     * 
+     * @param pattern 正则表达式的编译表示
+     * @param str 需要变量替换的文本
+     * @return 替换后的文本
+     */
+    public static boolean match(@Nonnull Pattern pattern, @Nullable String str) {
+        if (str == null) {
+            return false;
+        }
+        return pattern.matcher(str).matches();
+    }
+
+    /**
      * 变量替换
      * @param pattern 正则表达式的编译表示
      * @param str 需要变量替换的文本

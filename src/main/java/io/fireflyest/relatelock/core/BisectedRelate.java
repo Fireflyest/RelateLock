@@ -14,8 +14,8 @@ import io.fireflyest.relatelock.Print;
  */
 public class BisectedRelate extends Relate {
 
-    protected BisectedRelate(@Nullable Block signBlock, @Nonnull Block attachBlock) {
-        super(signBlock, attachBlock);
+    protected BisectedRelate(@Nullable Block signBlock, @Nonnull Block attachBlock, int deep) {
+        super(signBlock, attachBlock, deep);
     }
 
     @Override

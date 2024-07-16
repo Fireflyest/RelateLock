@@ -18,8 +18,8 @@ import io.fireflyest.relatelock.util.BlockUtils;
  */
 public class BlockRelate extends Relate {
 
-    protected BlockRelate(@Nullable Block signBlock, @Nonnull Block attachBlock) {
-        super(signBlock, attachBlock);
+    protected BlockRelate(@Nullable Block signBlock, @Nonnull Block attachBlock, int deep) {
+        super(signBlock, attachBlock, deep);
     }
 
     @Override
@@ -61,13 +61,13 @@ public class BlockRelate extends Relate {
         boolean lockable = true;
         if (block.getBlockData() instanceof Chest) { // 箱子
             Print.RELATE_LOCK.debug("BlockRelate.tryLock() -> chest");
-            subRelate.add(new ChestRelate(null, block));
+            subRelate.add(new ChestRelate(null, block, this.deep + 1));
         } else if (block.getBlockData() instanceof Openable) { // 可开关方块
             Print.RELATE_LOCK.debug("BlockRelate.tryLock() -> openable");
-            subRelate.add(new OpenableRelate(null, block));
+            subRelate.add(new OpenableRelate(null, block, this.deep + 1));
         } else if (block.getState() instanceof TileState) { // 实体方块
             Print.RELATE_LOCK.debug("BlockRelate.tryLock() -> tile");
-            subRelate.add(new TileRelate(null, block));
+            subRelate.add(new TileRelate(null, block, this.deep + 1));
         } else {
             lockable = false;
         }

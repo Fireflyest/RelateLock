@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.apache.commons.lang.StringUtils;
@@ -41,6 +42,7 @@ import io.fireflyest.relatelock.cache.LockOrganism;
 import io.fireflyest.relatelock.config.Config;
 import io.fireflyest.relatelock.core.api.Locksmith;
 import io.fireflyest.relatelock.util.BlockUtils;
+import io.fireflyest.relatelock.util.TextUtils;
 import io.fireflyest.relatelock.util.YamlUtils;
 import net.milkbowl.vault.economy.Economy;
 
@@ -148,16 +150,16 @@ public class LocksmithImpl implements Locksmith {
         final Relate relate;
         if (attachBlock.getBlockData() instanceof Chest) { // 箱子
             Print.RELATE_LOCK.debug("LocksmithImpl.lock() -> chest");
-            relate = new ChestRelate(signBlock, attachBlock);
+            relate = new ChestRelate(signBlock, attachBlock, 0);
         } else if (attachBlock.getBlockData() instanceof Openable) { //门，可能是多个上下分方块
             Print.RELATE_LOCK.debug("LocksmithImpl.lock() -> openable");
-            relate = new OpenableRelate(signBlock, attachBlock);
+            relate = new OpenableRelate(signBlock, attachBlock, 0);
         } else if (attachBlock.getState() instanceof TileState) { // 方块实体
             Print.RELATE_LOCK.debug("LocksmithImpl.lock() -> tile");
-            relate = new TileRelate(signBlock, attachBlock);
+            relate = new TileRelate(signBlock, attachBlock, 0);
         } else { // 上锁贴着方块附近的方块
             Print.RELATE_LOCK.debug("LocksmithImpl.lock() -> block");
-            relate = new BlockRelate(signBlock, attachBlock);
+            relate = new BlockRelate(signBlock, attachBlock, 0);
         }
 
         final Set<Block> relateBlocks = relate.getRelateBlocks();
@@ -259,6 +261,7 @@ public class LocksmithImpl implements Locksmith {
                 destroyMainSign = false;
                 desc = DESC_SIGN;
             } else { // 其他方块
+                // TODO: 重新建立关联
                 access = Objects.equal(lock.getOwner(), uid) && locationOrg.scard(signLocation) < 3;
                 destroyMainSign = true;
                 desc = location.getBlock().getType().name().toLowerCase();
@@ -534,7 +537,7 @@ public class LocksmithImpl implements Locksmith {
             access = Objects.equal(lock.getOwner(), uid);
             if (access) {
                 Print.RELATE_LOCK.debug("LocksmithImpl.place() -> door");
-                final BisectedRelate relate = new BisectedRelate(null, block);
+                final BisectedRelate relate = new BisectedRelate(null, block, 0);
                 for (Block relateBlock : relate.getRelateBlocks()) {
                     this.lockLocation(relateBlock.getLocation(), signLocation);
                 }
@@ -681,7 +684,7 @@ public class LocksmithImpl implements Locksmith {
         if (player == null) {
             if (uuidMap.containsKey(playerName)) { // 缓存中查找
                 player = Bukkit.getOfflinePlayer(uuidMap.get(playerName));
-            } else { // 遍历查找
+            } else if (TextUtils.match(Pattern.compile("^[\\w]+$"), playerName)) { // 遍历查找
                 for (OfflinePlayer offlinePlayer : Bukkit.getOfflinePlayers()) {
                     if (playerName.equals(offlinePlayer.getName())) {
                         uuidMap.put(playerName, offlinePlayer.getUniqueId());
