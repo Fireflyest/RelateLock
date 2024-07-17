@@ -82,4 +82,6 @@ public interface Locksmith {
     @Nullable
     Lock getLock(@Nonnull Location location);
 
+    boolean lockable(@Nonnull Block block);
+
 }

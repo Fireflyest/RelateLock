@@ -364,6 +364,13 @@ public class LocksmithImpl implements Locksmith {
         return lock;
     }
 
+    @Override
+    public boolean lockable(@Nonnull Block block) {
+        return block.getBlockData() instanceof Chest
+            || block.getBlockData() instanceof Openable
+            || block.getState() instanceof TileState;
+    }
+
     /**
      * 重新上锁
      * 
@@ -497,9 +504,9 @@ public class LocksmithImpl implements Locksmith {
                     }
                     openable.setOpen(isOpen);
                     block.setBlockData(openable);
-                    Print.RELATE_LOCK.debug("LocksmithImpl.useLocation() -> open:{}", isOpen);
                 }
             }
+            Print.RELATE_LOCK.debug("LocksmithImpl.useLocation() -> open:{}", isOpen);
         } else if (clickBlock.getState() instanceof TileState) { // 实体方块
             canUse = true;
         }
@@ -610,18 +617,51 @@ public class LocksmithImpl implements Locksmith {
     private boolean placeSign(@Nonnull Block block, @Nonnull String uid) {
         boolean access = true;
         final Block attachBlock = BlockUtils.blockAttach(block);
-        if (attachBlock != null && this.isLocationLocked(attachBlock.getLocation())) {
-            final Location signLocation = locationOrg.get(attachBlock.getLocation());
+        if (attachBlock == null) {
+            return access;
+        }
+        Location signLocation = null;
+        if (this.isLocationLocked(attachBlock.getLocation())) { // 贴在上锁方块上
+            signLocation = locationOrg.get(attachBlock.getLocation());
             Validate.notNull(signLocation, EMPTY_SIGN_LOC);
             final Lock lock = lockOrg.get(signLocation);
             Validate.notNull(lock, EMPTY_LOCK);
             access = Objects.equal(lock.getOwner(), uid);
-            if (access) {
-                Print.RELATE_LOCK.debug("LocksmithImpl.place() -> sign");
-                this.lockLocation(block.getLocation(), signLocation);
+        } else if (attachBlock.getBlockData() instanceof Chest 
+                || attachBlock.getState() instanceof TileState
+                || attachBlock.getBlockData() instanceof Openable) {
+            // 
+        } else { // 贴在上锁方块旁边
+            Lock lock = null;
+            signLocation = this.traceLock(block, attachBlock);
+            if (signLocation != null && (lock = this.getLock(signLocation)) != null) {
+                access = Objects.equal(lock.getOwner(), uid);
             }
         }
+        if (access && signLocation != null) {
+            Print.RELATE_LOCK.debug("LocksmithImpl.place() -> sign");
+            this.lockLocation(block.getLocation(), signLocation);
+            this.lockLocation(attachBlock.getLocation(), signLocation);
+        }
         return access;
+    }
+
+    @Nullable
+    private Location traceLock(@Nonnull Block signBlock, @Nonnull Block attachBlock) {
+        final Location[] locations = new Location[] {
+            attachBlock.getRelative(BlockFace.DOWN).getLocation(),
+            attachBlock.getRelative(BlockFace.UP).getLocation(),
+            attachBlock.getRelative(BlockFace.EAST).getLocation(),
+            attachBlock.getRelative(BlockFace.WEST).getLocation(),
+            attachBlock.getRelative(BlockFace.SOUTH).getLocation(),
+            attachBlock.getRelative(BlockFace.NORTH).getLocation()
+        };
+        for (Location location : locations) {
+            if (locationOrg.scard(location) == 1) {
+                return locationOrg.get(location);
+            }
+        }
+        return null;
     }
 
     /**

@@ -66,7 +66,7 @@ public class LockEventListener implements Listener {
         Lock lock = null;
         if (lines[0].equalsIgnoreCase(config.lockString())) {
             lock = new Lock(uid, Instant.now().toEpochMilli(), config.lockString(), null);
-        } else {
+        } else if (StringUtils.isNotEmpty(lines[0])) {
             final String[] firstLine = StringUtils.split(lines[0], " ");
             final String type = firstLine.length > 0 ? firstLine[0] : "";
             final String data = firstLine.length > 1 ? firstLine[1] : "123";

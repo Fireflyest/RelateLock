@@ -30,16 +30,16 @@ public class ContainerRelate extends Relate {
      * @param signBlock 牌子
      * @param attachBlock 附着方块
      * @param deep 关联深度
-     * @param trace 追溯
+     * @param traceNear 追溯
      */
     protected ContainerRelate(@Nullable Block signBlock, 
                               @Nonnull Block attachBlock, 
                               int deep,
-                              boolean trace) {
+                              boolean traceNear) {
         super(signBlock, attachBlock, deep);
-        this.leftTrace = trace;
-        this.rightTrace = trace;
-        this.upTrace = trace;
+        this.leftTrace = traceNear;
+        this.rightTrace = traceNear;
+        this.upTrace = traceNear;
     }
 
     /**
