@@ -19,11 +19,13 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import io.fireflyest.relatelock.bean.Lock;
+import io.fireflyest.relatelock.cache.ConfirmOrganism;
 import io.fireflyest.relatelock.cache.LockOrganism;
 import io.fireflyest.relatelock.config.Config;
-import io.fireflyest.relatelock.core.api.Locksmith;
+import io.fireflyest.relatelock.core.LocksmithImpl;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 
@@ -37,10 +39,10 @@ public class LockEventListener implements Listener {
     private final Lock cooldownLock = new Lock();
     private final LockOrganism lockOrganism = new LockOrganism("cooldown", true);
 
-    private final Locksmith locksmith;
+    private final LocksmithImpl locksmith;
     private final Config config;
 
-    public LockEventListener(Locksmith locksmith, Config config) {
+    public LockEventListener(LocksmithImpl locksmith, Config config) {
         this.locksmith = locksmith;
         this.config = config;
     }
@@ -103,7 +105,8 @@ public class LockEventListener implements Listener {
     public void onPlayerInteract(PlayerInteractEvent event) {
         final Block block = event.getClickedBlock();
         if (block == null || event.getAction() != Action.RIGHT_CLICK_BLOCK 
-                          || !locksmith.isLocationLocked(block.getLocation())) {
+                          || !locksmith.isLocationLocked(block.getLocation())
+                          || !locksmith.lockable(block)) {
             return;
         }
 
@@ -189,6 +192,21 @@ public class LockEventListener implements Listener {
             event.setCancelled(true);
         }
 
+    }
+
+    /**
+     * 玩家聊天事件，输入密码
+     * 
+     * @param event 聊天事件
+     */
+    @EventHandler
+    public void onPlayerChat(AsyncPlayerChatEvent event) {
+        final ConfirmOrganism confirmOrg = locksmith.getConfirmOrg();
+        final Player player = event.getPlayer();
+        if (config.lockPasswordString().equals(confirmOrg.get(player))) {
+            confirmOrg.setex(player, 1000 * 10, event.getMessage());
+            event.setCancelled(true);
+        }
     }
 
     /**

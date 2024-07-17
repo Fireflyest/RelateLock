@@ -45,6 +45,10 @@ import io.fireflyest.relatelock.core.api.Locksmith;
 import io.fireflyest.relatelock.util.BlockUtils;
 import io.fireflyest.relatelock.util.TextUtils;
 import io.fireflyest.relatelock.util.YamlUtils;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TranslatableComponent;
+import net.md_5.bungee.api.chat.hover.content.Item;
 import net.milkbowl.vault.economy.Economy;
 
 /**
@@ -137,6 +141,15 @@ public class LocksmithImpl implements Locksmith {
             final LocalDateTime time = LocalDateTime.parse(log.substring(3, 15), formatter);
             return Duration.between(time, LocalDateTime.now()).toDays() > 7;
         });
+    }
+
+    /**
+     * 获取确认缓存
+     * 
+     * @return 玩家确认缓存
+     */
+    public ConfirmOrganism getConfirmOrg() {
+        return confirmOrg;
     }
 
     @Override
@@ -420,29 +433,97 @@ public class LocksmithImpl implements Locksmith {
         if (lock.getType().equals(config.lockString())) {
             access = lock.getShare().contains(uid);
         } else if (lock.getType().equals(config.lockPasswordString())) {
-            // 
+            access = this.usePwdAccess(player, lock);
         } else if (lock.getType().equals(config.lockFeeString())) {
-            if (confirmOrg.exist(player)) {
-                final Economy economy = RelateLock.getPlugin().getEconomy();
-                final double fee = NumberConversions.toDouble(lock.getData());
-                if (economy.has(player, fee)) {
-                    economy.withdrawPlayer(player, fee);
-                    economy.depositPlayer(this.getOfflinePlayer(uid), fee);
-                    access = true;
-                    player.performCommand("money");
-                }
-            } else {
-                confirmOrg.setex(player, 1000 * 10, "fee");
-                player.sendMessage("🔒 已被上锁，十秒内再次右键花费" + lock.getData() + "即可使用");
-            }
+            access = this.useFeeAccess(player, lock);
         } else if (lock.getType().equals(config.lockTokenString())
                 && lock.getData().startsWith(YamlUtils.DATA_PATH)) {
+            access = this.useTokenAccess(player, lock);
+        }
+        return access;
+    }
+
+    /**
+     * 玩家使用上锁物品
+     * 
+     * @param player 玩家
+     * @param lock 锁
+     * @return 是否允许
+     */
+    private boolean usePwdAccess(@Nonnull Player player, @Nonnull Lock lock) {
+        boolean access = false;
+        if (confirmOrg.exist(player)) {
+            access = lock.getData().equals(confirmOrg.get(player));
+            confirmOrg.del(player);
+        } else {
+            final ComponentBuilder componentBuilder = new ComponentBuilder();
+            componentBuilder.append("🔒密码锁[")
+                            .append("#".repeat(lock.getData().length()))
+                            .append("] §7请在聊天框输入密码后再次右键使用");
+            confirmOrg.setex(player, 1000 * 10, config.lockPasswordString());
+            player.spigot().sendMessage(componentBuilder.create());
+        }
+        return access;
+    }
+
+    /**
+     * 玩家使用上锁物品
+     * 
+     * @param player 玩家
+     * @param lock 锁
+     * @return 是否允许
+     */
+    private boolean useFeeAccess(@Nonnull Player player, @Nonnull Lock lock) {
+        boolean access = false;
+        if (config.lockFeeString().equals(confirmOrg.get(player))) {
+            final Economy economy = RelateLock.getPlugin().getEconomy();
+            final double fee = NumberConversions.toDouble(lock.getData());
+            final OfflinePlayer owner = Bukkit.getOfflinePlayer(UUID.fromString(lock.getOwner()));
+            if (economy.has(player, fee)) {
+                economy.withdrawPlayer(player, fee);
+                economy.depositPlayer(owner, fee);
+                access = true;
+                player.performCommand("money");
+            }
+        } else {
+            final ComponentBuilder componentBuilder = new ComponentBuilder();
+            componentBuilder.append("🔒付费锁[")
+                            .append(lock.getData())
+                            .append("] §7再次右键付费使用");
+            confirmOrg.setex(player, 1000 * 10, config.lockFeeString());
+            player.spigot().sendMessage(componentBuilder.create());
+        }
+        return access;
+    }
+
+    /**
+     * 玩家使用上锁物品
+     * 
+     * @param player 玩家
+     * @param lock 锁
+     * @return 是否允许
+     */
+    private boolean useTokenAccess(@Nonnull Player player, @Nonnull Lock lock) {
+        boolean access = false;
+        if (config.lockTokenString().equals(confirmOrg.get(player))) {
             final ItemStack hand = player.getInventory().getItemInMainHand();
             final ItemStack token = YamlUtils.deserializeItemStack(lock.getData());
             if (hand.isSimilar(token) && hand.getAmount() >= token.getAmount()) {
                 hand.setAmount(hand.getAmount() - token.getAmount());
                 access = true;
             }
+        } else {
+            final ItemStack token = YamlUtils.deserializeItemStack(lock.getData());
+            final String material = token.getType().name().toLowerCase();
+            final Item item = new Item("minecraft:" + material, token.getAmount(), null);
+            final ComponentBuilder componentBuilder = new ComponentBuilder();
+            componentBuilder.append("🔒代币锁[")
+                            .append(new TranslatableComponent("item.minecraft." + material))
+                            .event(new HoverEvent(HoverEvent.Action.SHOW_ITEM, item))
+                            .append("×" + token.getAmount()).reset()
+                            .append("] §7再次右键消耗代币使用");
+            confirmOrg.setex(player, 1000 * 10, config.lockTokenString());
+            player.spigot().sendMessage(componentBuilder.create());
         }
         return access;
     }

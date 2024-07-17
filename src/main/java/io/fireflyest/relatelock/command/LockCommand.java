@@ -127,14 +127,16 @@ public class LockCommand extends ComplexCommand {
                             .append("#".repeat(data.length()))
                             .append("]");
         } else if (type.equals(config.lockFeeString())) {
-            componentBuilder.append("付费锁 ").append(data);
+            componentBuilder.append("付费锁 [").append(data).append("]");
         } else if (type.equals(config.lockTokenString()) && data.startsWith(YamlUtils.DATA_PATH)) {
             final ItemStack token = YamlUtils.deserializeItemStack(data);
             final String material = token.getType().name().toLowerCase();
             final Item item = new Item("minecraft:" + material, token.getAmount(), null);
-            componentBuilder.append("代币锁 ")
+            componentBuilder.append("代币锁 [")
                             .append(new TranslatableComponent("item.minecraft." + material))
-                            .event(new HoverEvent(HoverEvent.Action.SHOW_ITEM, item));
+                            .event(new HoverEvent(HoverEvent.Action.SHOW_ITEM, item))
+                            .append("×" + token.getAmount()).reset()
+                            .append("]");
         }
         return componentBuilder.create();
     }
