@@ -151,6 +151,17 @@ public abstract class AbstractOrganism<K, V> implements Organism<K, V> {
     }
 
     @Override
+    public boolean sexist(@Nonnull K key, V value) {
+        final AbstractCell<V> cell = cacheMap.get(key);
+        boolean exist = false;
+        Set<V> valueSet = null;
+        if (cell != null && (valueSet = cell.getAll()) != null) {
+            exist = valueSet.contains(value);
+        }
+        return exist;
+    }
+
+    @Override
     public void srem(@Nonnull K key, V value) {
         final AbstractCell<V> cell = cacheMap.get(key);
         Set<V> valueSet = null;

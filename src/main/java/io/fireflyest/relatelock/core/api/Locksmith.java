@@ -61,6 +61,7 @@ public interface Locksmith {
 
     /**
      * 获取某位置的方块是否被上锁
+     * 
      * @param location 位置
      * @return 是否上锁
      */
@@ -68,6 +69,7 @@ public interface Locksmith {
 
     /**
      * 牌子修改
+     * 
      * @param location 位置
      * @param lines 行
      * @return 是否可修改
@@ -76,12 +78,19 @@ public interface Locksmith {
 
     /**
      * 获取某位置上方块的锁
+     * 
      * @param location 位置
      * @return 锁
      */
     @Nullable
     Lock getLock(@Nonnull Location location);
 
+    /**
+     * 方块是否可锁
+     * 
+     * @param block 方块
+     * @return 是否可锁
+     */
     boolean lockable(@Nonnull Block block);
 
 }

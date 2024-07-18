@@ -72,9 +72,10 @@ public class LockEventListener implements Listener {
             final String[] firstLine = StringUtils.split(lines[0], " ");
             final String type = firstLine.length > 0 ? firstLine[0] : "";
             final String data = firstLine.length > 1 ? firstLine[1] : "123";
-            if (type.equalsIgnoreCase(config.lockPasswordString())
+            if ((type.equalsIgnoreCase(config.lockPasswordString())
                     || type.equalsIgnoreCase(config.lockFeeString())
-                    || type.equalsIgnoreCase(config.lockTokenString())) {
+                    || type.equalsIgnoreCase(config.lockTokenString()))
+                    && player.hasPermission("lock." + type)) {
                 lock = new Lock(uid, Instant.now().toEpochMilli(), type, data);
             }
         }
@@ -91,9 +92,10 @@ public class LockEventListener implements Listener {
         if (locksmith.isLocationLocked(block.getLocation())) {
             // 上锁牌子修改
             final String[] newLines = locksmith.signChange(block.getLocation(), uid, lines);
-            for (int i = 0; i < 4; i++) {
-                event.setLine(i, newLines[i]);
-            }
+            event.setLine(0, newLines[0]);
+            event.setLine(1, newLines[1]);
+            event.setLine(2, newLines[2]);
+            event.setLine(3, newLines[3]);
         }
     }
 
@@ -203,8 +205,9 @@ public class LockEventListener implements Listener {
     public void onPlayerChat(AsyncPlayerChatEvent event) {
         final ConfirmOrganism confirmOrg = locksmith.getConfirmOrg();
         final Player player = event.getPlayer();
-        if (config.lockPasswordString().equals(confirmOrg.get(player))) {
-            confirmOrg.setex(player, 1000 * 10, event.getMessage());
+        if (confirmOrg.sexist(player, config.lockPasswordString())) {
+            confirmOrg.sadd(player, event.getMessage());
+            confirmOrg.expire(player, 1000 * 20);
             event.setCancelled(true);
         }
     }

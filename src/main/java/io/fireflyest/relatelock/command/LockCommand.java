@@ -14,6 +14,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import io.fireflyest.relatelock.bean.Lock;
+import io.fireflyest.relatelock.cache.TokenOrganism;
 import io.fireflyest.relatelock.config.Config;
 import io.fireflyest.relatelock.core.LocksmithImpl;
 import io.fireflyest.relatelock.util.YamlUtils;
@@ -49,13 +50,31 @@ public class LockCommand extends ComplexCommand {
         if (sender instanceof Player player) {
             final Block block = player.getTargetBlockExact(5);
             Lock lock = null;
-            if (block != null && (lock = locksmith.getLock(block.getLocation())) != null) {
-                locksmith.trimLogs(lock);
-                player.spigot().sendMessage(this.anPlayer("🔒", lock.getOwner()));
-                player.spigot().sendMessage(this.type("类型:", lock.getType(), lock.getData()));
-                player.spigot().sendMessage(this.listPlayers("共享:", lock.getShare()));
-                if (player.getUniqueId().toString().equals(lock.getOwner())) {
-                    player.spigot().sendMessage(this.listLogs("记录:", lock.getLog()));
+            if (block == null || (lock = locksmith.getLock(block.getLocation())) == null) {
+                // 方块未上锁
+                return true;
+            }
+            // 查看锁信息
+            locksmith.trimLogs(lock);
+            player.spigot().sendMessage(this.anPlayer("🔒", lock.getOwner()));
+            player.spigot().sendMessage(this.type("类型:", lock.getType(), lock.getData()));
+            player.spigot().sendMessage(this.listPlayers("共享:", lock.getShare()));
+            if (player.getUniqueId().toString().equals(lock.getOwner())) {
+                player.spigot().sendMessage(this.listLogs("记录:", lock.getLog()));
+                // 领取收的代币
+                final Set<String> tokens;
+                final TokenOrganism tokenOrg = locksmith.getTokenOrg();
+                if (config.lockTokenString().equals(lock.getType()) 
+                        && (tokens = tokenOrg.smembers(lock.getOwner())) != null) {
+                    
+                    final ItemStack tokenItem = YamlUtils.deserializeItemStack(lock.getData());
+                    tokens.removeIf(token -> {
+                        final boolean canAdd = player.getInventory().firstEmpty() != -1;
+                        if (canAdd) {
+                            player.getInventory().addItem(tokenItem.clone());
+                        }
+                        return canAdd;
+                    });
                 }
             }
         }

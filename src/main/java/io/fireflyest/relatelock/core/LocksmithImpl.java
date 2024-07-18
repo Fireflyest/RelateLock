@@ -40,6 +40,7 @@ import io.fireflyest.relatelock.bean.Lock;
 import io.fireflyest.relatelock.cache.ConfirmOrganism;
 import io.fireflyest.relatelock.cache.LocationOrganism;
 import io.fireflyest.relatelock.cache.LockOrganism;
+import io.fireflyest.relatelock.cache.TokenOrganism;
 import io.fireflyest.relatelock.config.Config;
 import io.fireflyest.relatelock.core.api.Locksmith;
 import io.fireflyest.relatelock.util.BlockUtils;
@@ -68,6 +69,8 @@ public class LocksmithImpl implements Locksmith {
     public static final String DESC_SIGN = "sign";
     public static final String DESC_MAIN_SIGN = "main_sign";
 
+    public static final String ADMIN = "lock.admin";
+
     /**
      * 存储玩家的UUID
      */
@@ -89,9 +92,14 @@ public class LocksmithImpl implements Locksmith {
     private final LockOrganism lockOrg = new LockOrganism("lock");
 
     /**
+     * 牌子的位置对应的一个锁收的代币
+     */
+    private final TokenOrganism tokenOrg = new TokenOrganism("token");
+
+    /**
      * 玩家开锁确认
      */
-    private final ConfirmOrganism confirmOrg = new ConfirmOrganism("confirm");
+    private final ConfirmOrganism confirmOrg = new ConfirmOrganism("confirm", true);
 
     public LocksmithImpl(@Nonnull Config config) {
         this.config = config;
@@ -107,10 +115,19 @@ public class LocksmithImpl implements Locksmith {
         }
         this.locationOrg.load(plugin, entry, true);
         this.lockOrg.load(plugin, entry, true);
+        this.tokenOrg.load(plugin, entry, true);
         // 方块上锁
         for (Location location : this.locationOrg.keySet()) {
             final Chunk chunk = location.getChunk();
             locationMap.computeIfAbsent(chunk, k -> new HashSet<>()).add(location);
+        }
+        // 移除空锁
+        for (Location signLocation : lockOrg.keySet()) {
+            final Block block = signLocation.getBlock();
+            if (!(block.getBlockData() instanceof WallSign)) {
+                this.unlock(signLocation);
+                lockOrg.expire(signLocation, 1);
+            }
         }
         // 玩家UUID
         uuidMap.clear();
@@ -129,6 +146,7 @@ public class LocksmithImpl implements Locksmith {
         }
         this.locationOrg.save(plugin, entry);
         this.lockOrg.save(plugin, entry);
+        this.tokenOrg.save(plugin, entry);
     }
 
     /**
@@ -141,6 +159,33 @@ public class LocksmithImpl implements Locksmith {
             final LocalDateTime time = LocalDateTime.parse(log.substring(3, 15), formatter);
             return Duration.between(time, LocalDateTime.now()).toDays() > 7;
         });
+    }
+
+    /**
+     * 获取上锁位置缓存
+     * 
+     * @return 上锁位置缓存
+     */
+    public LocationOrganism getLocationOrg() {
+        return locationOrg;
+    }
+
+    /**
+     * 获取主牌子对应的锁缓存
+     * 
+     * @return 锁缓存
+     */
+    public LockOrganism getLockOrg() {
+        return lockOrg;
+    }
+
+    /**
+     * 获取锁收取的代币缓存
+     * 
+     * @return 锁代币缓存
+     */
+    public TokenOrganism getTokenOrg() {
+        return tokenOrg;
     }
 
     /**
@@ -235,17 +280,18 @@ public class LocksmithImpl implements Locksmith {
             return access;
         }
         if (locationOrg.scard(location) > 1) { // 主牌子
-            access = Objects.equal(lock.getOwner(), uid);
+            access = Objects.equal(lock.getOwner(), uid) || player.hasPermission(ADMIN);
             desc = DESC_MAIN_SIGN;
             this.addLog(lock, name, "E", access, desc);
         } else if (locationOrg.scard(location) == 1) { // 关联方块
             if (location.getBlock().getBlockData() instanceof WallSign) { // 牌子
-                access = Objects.equal(lock.getOwner(), uid);
+                access = Objects.equal(lock.getOwner(), uid) || player.hasPermission(ADMIN);
                 desc = DESC_SIGN;
                 this.addLog(lock, name, "E", access, desc);
             } else { // 其他方块
                 boolean canUse = false;
-                access = lock.getOwner().equals(uid) || this.useAccess(player, lock);
+                access = lock.getOwner().equals(uid) || this.useAccess(player, lock)
+                                                     || player.hasPermission(ADMIN);
                 desc = location.getBlock().getType().name().toLowerCase();
                 if (access) {
                     canUse = this.useLocation(location);
@@ -452,15 +498,18 @@ public class LocksmithImpl implements Locksmith {
      */
     private boolean usePwdAccess(@Nonnull Player player, @Nonnull Lock lock) {
         boolean access = false;
-        if (confirmOrg.exist(player)) {
-            access = lock.getData().equals(confirmOrg.get(player));
-            confirmOrg.del(player);
+        if (confirmOrg.sexist(player, config.lockPasswordString())) {
+            final Set<String> confirms = confirmOrg.smembers(player);
+            if (confirms != null && confirms.contains(lock.getData())) {
+                access = true;
+            }
         } else {
             final ComponentBuilder componentBuilder = new ComponentBuilder();
             componentBuilder.append("🔒密码锁[")
                             .append("#".repeat(lock.getData().length()))
                             .append("] §7请在聊天框输入密码后再次右键使用");
-            confirmOrg.setex(player, 1000 * 10, config.lockPasswordString());
+            confirmOrg.sadd(player, config.lockPasswordString());
+            confirmOrg.expire(player, 1000 * 20);
             player.spigot().sendMessage(componentBuilder.create());
         }
         return access;
@@ -475,7 +524,7 @@ public class LocksmithImpl implements Locksmith {
      */
     private boolean useFeeAccess(@Nonnull Player player, @Nonnull Lock lock) {
         boolean access = false;
-        if (config.lockFeeString().equals(confirmOrg.get(player))) {
+        if (confirmOrg.sexist(player, config.lockFeeString())) {
             final Economy economy = RelateLock.getPlugin().getEconomy();
             final double fee = NumberConversions.toDouble(lock.getData());
             final OfflinePlayer owner = Bukkit.getOfflinePlayer(UUID.fromString(lock.getOwner()));
@@ -490,7 +539,8 @@ public class LocksmithImpl implements Locksmith {
             componentBuilder.append("🔒付费锁[")
                             .append(lock.getData())
                             .append("] §7再次右键付费使用");
-            confirmOrg.setex(player, 1000 * 10, config.lockFeeString());
+            confirmOrg.sadd(player, config.lockFeeString());
+            confirmOrg.expire(player, 1000 * 20);
             player.spigot().sendMessage(componentBuilder.create());
         }
         return access;
@@ -505,11 +555,13 @@ public class LocksmithImpl implements Locksmith {
      */
     private boolean useTokenAccess(@Nonnull Player player, @Nonnull Lock lock) {
         boolean access = false;
-        if (config.lockTokenString().equals(confirmOrg.get(player))) {
+        if (confirmOrg.sexist(player, config.lockTokenString())) {
             final ItemStack hand = player.getInventory().getItemInMainHand();
             final ItemStack token = YamlUtils.deserializeItemStack(lock.getData());
             if (hand.isSimilar(token) && hand.getAmount() >= token.getAmount()) {
+                final String tokenData = player.getName() + "-" + LocalDateTime.now().toString();
                 hand.setAmount(hand.getAmount() - token.getAmount());
+                tokenOrg.sadd(lock.getOwner(), tokenData);
                 access = true;
             }
         } else {
@@ -522,7 +574,8 @@ public class LocksmithImpl implements Locksmith {
                             .event(new HoverEvent(HoverEvent.Action.SHOW_ITEM, item))
                             .append("×" + token.getAmount()).reset()
                             .append("] §7再次右键消耗代币使用");
-            confirmOrg.setex(player, 1000 * 10, config.lockTokenString());
+            confirmOrg.sadd(player, config.lockTokenString());
+            confirmOrg.expire(player, 1000 * 20);
             player.spigot().sendMessage(componentBuilder.create());
         }
         return access;

@@ -10,3 +10,29 @@ commands:
   lock:
     description: 主指令
     usage: /lock
+  unlock:
+    description: 拆锁
+    usage: /unlock
+    permission: lock.unlock
+
+permissions:
+  lock.pwd:
+    description: 创建密码锁
+    default: true
+  lock.fee:
+    description: 创建付费锁
+    default: true
+  lock.token:
+    description: 创建代币锁
+    default: true
+  lock.unlock:
+    description: 强行拆锁
+    default: op
+  lock.admin:
+    description: 管理员权限
+    default: op
+    children:
+      lock.pwd: true
+      lock.fee: true
+      lock.token: true
+      lock.unlock: true

@@ -106,6 +106,15 @@ public interface Organism<K, V> {
     Set<V> smembers(@Nonnull K key);
 
     /**
+     * 集合是否存在某个数据
+     * 
+     * @param key 键
+     * @param value 值
+     * @return 是否存在
+     */
+    boolean sexist(@Nonnull K key, V value);
+
+    /**
      * 删除集里的元素
      * @param key 键
      * @param value 值

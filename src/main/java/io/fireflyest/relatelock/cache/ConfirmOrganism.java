@@ -13,5 +13,9 @@ public class ConfirmOrganism extends AbstractOrganism<Player, String> {
     public ConfirmOrganism(String name) {
         super(name);
     }
+
+    public ConfirmOrganism(String name, boolean concurrent) {
+        super(name, true);
+    }
     
 }
