@@ -25,6 +25,9 @@ permissions:
   lock.token:
     description: 创建代币锁
     default: true
+  lock.backup:
+    description: 备份数据
+    default: op
   lock.unlock:
     description: 强行拆锁
     default: op

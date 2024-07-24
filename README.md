@@ -10,6 +10,7 @@
 | /lock backup | 备份                            | 无         |
 | /lock data   | 设置数据，如密码、费用、代币等      | 无         |
 | /lock logs   | 查看使用记录                     | 无         |
+| /unlock      | 强制拆锁                         | OP         |
 
 ## 上锁
 

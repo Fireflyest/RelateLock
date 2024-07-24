@@ -16,12 +16,21 @@ public class LockBackupCommand extends SubCommand {
 
     public LockBackupCommand(LocksmithImpl locksmith) {
         this.locksmith = locksmith;
+        this.permission = "lock.backup";
     }
 
     @Override
     protected boolean execute(@Nonnull CommandSender sender) {
-        locksmith.save(RelateLock.getPlugin(), "backup");
+        return this.execute(sender, "backup");
+    }
+
+    @Override
+    protected boolean execute(@Nonnull CommandSender sender, @Nonnull String arg1) {
+        if (!sender.hasPermission(permission)) {
+            return false;
+        }
+        locksmith.save(RelateLock.getPlugin(), arg1);
         return true;
     }
-    
+
 }
